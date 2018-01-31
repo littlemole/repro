@@ -1,0 +1,7 @@
+prefix=/usr/local
+includedir=${prefix}/include
+
+Name: reprocpp
+Description: reactive c++ promise library for async io
+Version: 0.0.1
+Cflags: -I${includedir}
