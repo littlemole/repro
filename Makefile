@@ -3,7 +3,7 @@ DESTDIR=/
 PREFIX=/usr/local
 
 LIBNAME = reprocpp
-LIBINC = ./include
+LIBINC = ./include/reprocpp
 
 PWD = $(shell pwd)
 
@@ -30,7 +30,7 @@ build:
 
 install: 
 	-rm -rf $(DESTDIR)/$(PREFIX)/include/$(LIBNAME)
-	cp -r $(LIBINC) $(DESTDIR)/$(PREFIX)/include/$(LIBNAME)
+	cp -r $(LIBINC) $(DESTDIR)/$(PREFIX)/include/
 	mkdir -p $(DESTDIR)/$(PREFIX)/lib/pkgconfig/
 	cp $(LIBNAME).pc $(DESTDIR)/$(PREFIX)/lib/pkgconfig/
 	

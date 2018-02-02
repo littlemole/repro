@@ -8,7 +8,7 @@
  */
 
 
-namespace mol {
+namespace repro {
 
 
 
@@ -29,7 +29,7 @@ LITTLE_MOLE_DEFINE_DEBUG_REF_CNT(ssl_connections)
 
 #ifdef MOL_PROMISE_DEBUG
 #define MOL_TEST_PRINT_CNTS()  \
-	    std::cerr << "promises:" << mol::g_promises_count << std::endl; \
+	    std::cerr << "promises:" << promises_g_count << std::endl; \
 
 /*		
 	    std::cerr << "events:" << mol::g_events_count << std::endl; \
@@ -48,7 +48,7 @@ LITTLE_MOLE_DEFINE_DEBUG_REF_CNT(ssl_connections)
 
 #ifdef MOL_PROMISE_DEBUG
 #define MOL_TEST_ASSERT_CNTS(p,e) \
-	    EXPECT_EQ(p,mol::g_promises_count); \
+	    EXPECT_EQ(p,promises_g_count); \
 
 /*		
 	    EXPECT_EQ(e,mol::g_events_count); \

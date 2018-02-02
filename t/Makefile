@@ -1,4 +1,4 @@
-DEBUG = -g 
+DEBUG = -g -DMOL_PROMISE_DEBUG
 release : override DEBUG = -O3
 
 # if not g++ we assume clang++
