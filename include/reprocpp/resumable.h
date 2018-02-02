@@ -135,7 +135,7 @@ public:
 	CoroPromiseMixin() noexcept
 	{}
 
-	mol::Future<Args...> get_return_object()
+	Future<Args...> get_return_object()
 	{
 		return Future<Args...>(*(this->state_), true);
 	}
