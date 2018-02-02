@@ -337,7 +337,7 @@ Future<Args...> future( T cb )
 } // end namespace org
 
 #ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
-#include "promise/resumable.h"
+#include "reprocpp/resumable.h"
 #endif
 
 #endif
