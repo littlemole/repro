@@ -581,8 +581,11 @@ Future<> coro_test_throw(Loop& loop, int& result)
 {
 	std::cout << "enter coro_test" << std::endl;
 
-	throw Ex("early"); // this does not work!
-	// have to go async first like this:
+	// throwing early works except for MSVC on 64bit 
+	// which fails with internal compiler error :-(
+#ifndef _WIN64
+	throw Ex("early"); 
+#endif
 
 	co_await loop.nextTick();
 
