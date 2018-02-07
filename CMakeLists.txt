@@ -2,25 +2,33 @@ cmake_minimum_required(VERSION 2.8.9)
 project(reprocpp)
 include(CTest)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(gtest REQUIRED)
 
 ############################################
 # OS support
 ############################################
 
 # default to UNIX
-set(OSLIBS "pthread")
-set(DEBUGFLAGS "-DMOL_PROMISE_DEBUG -g")
 
 IF (WIN32)
+    find_package(gtest REQUIRED)
 	set(OSLIBS "Ws2_32" "Rpcrt4")
 	set(DEBUGFLAGS "-DMOL_PROMISE_DEBUG -await")
+ELSEIF(UNIX)
+    set(OSLIBS "pthread")
+    find_package(PkgConfig)
+    pkg_check_modules(GTEST REQUIRED gtest)
+    set(GTEST_LIBRARY ${GTEST_LIBRARIES})
+    set(GTEST_INCLUDE_DIR ${GTEST_INCLUDE_DIRS})
+    set(DEBUGFLAGS "-g -DMOL_PROMISE_DEBUG ${GTEST_CFLAGS_OTHER}")
 ENDIF ()
 
+message("GTEST: ${GTEST_LIBRARY}")
+message("GTEST: ${GTEST_INCLUDE_DIR}")
+message("GTEST: ${GTEST_CFLAGS_OTHER}")
 ############################################
 # macros
 ############################################
