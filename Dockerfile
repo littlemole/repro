@@ -35,6 +35,9 @@ RUN cd /usr/src/gtest && \
   ln -s /usr/src/gtest/libgtest.a /usr/lib/libgtest.a && \
   ln -s /usr/src/gtest/libgtest_main.a /usr/lib/libgtest_main.a
 
-RUN mkdir -p /opt/workspace/reprocpp
+RUN mkdir -p /usr/local/src/reprocpp
 
-CMD ["/bin/bash", "-c", "cd /opt/workspace/reprocpp; make clean; make -e; make -e test; make -e build; make -e install;"]
+ADD . /usr/local/src/reprocpp
+
+RUN cd /usr/local/src/reprocpp && make clean && make -e && make -e test && make -e build && make -e install
+
