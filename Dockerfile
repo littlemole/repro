@@ -32,8 +32,9 @@ RUN cd /usr/src/gtest && \
   cmake -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_CXX_FLAGS="-std=c++14 -stdlib=libc++" . ; \
   fi && \
   make && \
-  ln -s /usr/src/gtest/libgtest.a /usr/lib/libgtest.a
+  ln -s /usr/src/gtest/libgtest.a /usr/lib/libgtest.a && \
+  ln -s /usr/src/gtest/libgtest_main.a /usr/lib/libgtest_main.a
 
-RUN mkdir -p /opt/workspace/retrocpp
+RUN mkdir -p /opt/workspace/reprocpp
 
-CMD ["/bin/bash", "-c", "cd /opt/workspace/reprocpp; make clean; make; make test; make build; make install;"]
+CMD ["/bin/bash", "-c", "cd /opt/workspace/reprocpp; make clean; make -e; make -e test; make -e build; make -e install;"]

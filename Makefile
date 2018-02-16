@@ -48,10 +48,10 @@ clean-image:
 	docker build -t littlemole/reprocpp . --no-cache -fDockerfile --build-arg CXX=$(CXX)
 		
 run: image-remove image 
-	docker run --name reprocpp -d -e COMPILER=$(CXX) -v "$(PWD):/opt/workspace/retrocpp"  littlemole/reprocpp
+	docker run --name reprocpp -d -e COMPILER=$(CXX) -v "$(PWD):/opt/workspace/reprocpp"  littlemole/reprocpp
                                         
 bash: image-remove image
-	docker run --name reprocpp -ti -e COMPILER=$(CXX) -v "$(PWD):/opt/workspace/retrocpp"  littlemole/reprocpp bash
+	docker run --name reprocpp -ti -e COMPILER=$(CXX) -v "$(PWD):/opt/workspace/reprocpp"  littlemole/reprocpp bash
 
 stop: 
 	-docker stop reprocpp

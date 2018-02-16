@@ -13,8 +13,6 @@ endif
 OPTIONS = -fpic -Wno-write-strings -pthread -D_REENTRANT $(DEFAULT_OPTS)
 CPPFLAGS = -Wall -I../include $(DEBUG) $(OPTIONS) 
 
-TESTFLAGS = -g
-
 TEST_SRC   = .
 TEST_BUILD = ./build
 TEST_LIBS  = /usr/lib/libgtest.a -lpthread $(DEFAULT_LIBS)
@@ -37,7 +35,7 @@ all: $(TEST_BINS)
 
 $(TEST_BUILD)/%.o: $(TEST_SRC)/%.cpp 
 	-mkdir -p $(TEST_BUILD)
-	$(CXX) -c $^ -o $@ $(CPPFLAGS) $(TESTFLAGS)
+	$(CXX) -c $^ -o $@ $(CPPFLAGS) 
 
 
 #################################################
