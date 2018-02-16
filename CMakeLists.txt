@@ -14,26 +14,17 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # default to UNIX
 
 IF (WIN32)
-    find_package(gtest REQUIRED)
+    find_package(GTest REQUIRED)
 	set(OSLIBS "Ws2_32" "Rpcrt4")
 	set(DEBUGFLAGS "-DMOL_PROMISE_DEBUG -await")
 ELSEIF(UNIX)
 
-#message(${GTEST_MAIN_LIBRARY})
-
     set(OSLIBS "pthread")
-#    set(GTest_ROOT /usr)
     find_package(GTest REQUIRED)
     find_package(PkgConfig)
-#    pkg_check_modules(GTEST REQUIRED gtest)
-#    set(GTEST_LIBRARY ${GTEST_LIBRARIES})
-#    set(GTEST_INCLUDE_DIR ${GTEST_INCLUDE_DIRS})
     set(DEBUGFLAGS "-g -DMOL_PROMISE_DEBUG ${GTEST_CFLAGS_OTHER}")
 ENDIF ()
 
-message("GTEST: ${GTEST_LIBRARY}")
-message("GTEST: ${GTEST_INCLUDE_DIR}")
-message("GTEST: ${GTEST_CFLAGS_OTHER}")
 ############################################
 # macros
 ############################################
