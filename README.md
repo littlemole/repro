@@ -1,2 +1,2 @@
 # repro
-reactive c++ promise intenden for asynchronous io
+reactive c++ promise intended for asynchronous io
