@@ -7,6 +7,10 @@ LIBINC = ./include/reprocpp
 
 PWD = $(shell pwd)
 
+BUILDCHAIN = make
+CONTAINER = $(shell echo "$(LIBNAME)_$(CXX)_$(BUILDCHAIN)" | sed 's/++/pp/')
+IMAGE = littlemole/$(CONTAINER)
+
 all: test
 
 test-build: ## make the test binaries
@@ -39,22 +43,19 @@ remove:
 	-rm $(DESTDIR)/$(PREFIX)/lib/pkgconfig/$(LIBNAME).pc
 	
 image: 
-	docker build -t littlemole/reprocpp . -fDockerfile  --build-arg CXX=$(CXX)
+	docker build -t $(IMAGE) . -fDockerfile  --build-arg CXX=$(CXX) --build-arg BUILDCHAIN=$(BUILDCHAIN)
 
 
 # docker stable testing environment
 
 clean-image: 
-	docker build -t littlemole/reprocpp . --no-cache -fDockerfile --build-arg CXX=$(CXX)
-		
-run: image-remove image 
-	docker run --name reprocpp -d -e COMPILER=$(CXX) -v "$(PWD):/opt/workspace/reprocpp"  littlemole/reprocpp
-                                        
-bash: image-remove image
-	docker run --name reprocpp -ti -e COMPILER=$(CXX) -v "$(PWD):/opt/workspace/reprocpp"  littlemole/reprocpp bash
+	docker build -t $(IMAGE) . --no-cache -fDockerfile --build-arg CXX=$(CXX) --build-arg BUILDCHAIN=$(BUILDCHAIN)
+		                                        
+bash: rmc image
+	docker run --name $(CONTAINER) -ti  $(IMAGE) bash
 
 stop: 
-	-docker stop reprocpp
+	-docker stop $(CONTAINER)
 	
-image-remove: stop 
-	-docker rm reprocpp
+rmc: stop 
+	-docker rm $(CONTAINER)

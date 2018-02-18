@@ -21,23 +21,22 @@ clang-5.0 lldb-5.0 lld-5.0 libc++-dev libc++abi-dev
 RUN ln -s /usr/include/c++/v1/cxxabi.h /usr/include/c++/v1/__cxxabi.h
 RUN ln -s /usr/include/libcxxabi/__cxxabi_config.h /usr/include/c++/v1/__cxxabi_config.h
 
-ARG CXX
+ARG CXX=g++
 ENV CXX=${CXX}
 
 # compile gtest with given compiler
-RUN cd /usr/src/gtest && \
-  if [ "$CXX" = "g++" ] ; then \
-  cmake .; \
-  else \
-  cmake -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_CXX_FLAGS="-std=c++14 -stdlib=libc++" . ; \
-  fi && \
-  make && \
-  ln -s /usr/src/gtest/libgtest.a /usr/lib/libgtest.a && \
-  ln -s /usr/src/gtest/libgtest_main.a /usr/lib/libgtest_main.a
+ADD ./docker/gtest.sh /usr/local/bin/gtest.sh
+RUN /usr/local/bin/gtest.sh
 
+# add repro sources
 RUN mkdir -p /usr/local/src/reprocpp
-
 ADD . /usr/local/src/reprocpp
 
-RUN cd /usr/local/src/reprocpp && make clean && make -e && make -e test && make -e build && make -e install
+ARG BUILDCHAIN=make
+ENV BUILDCHAIN=${BUILDCHAIN}
+
+# make a repro build, test and install
+ADD ./docker/build.sh /usr/local/bin/build.sh 
+RUN /usr/local/bin/build.sh reprocpp
+
 

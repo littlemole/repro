@@ -6,6 +6,17 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+############################################
+# clang support
+############################################
+
+set(LINKERFLAGS "")
+set(STDLIB "")
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    set(STDLIB "c++abi")
+    set(LINKERFLAGS "-stdlib=libc++ -fcoroutines-ts  -std=c++14")
+    set(FLAGS "-stdlib=libc++ -fcoroutines-ts -D_RESUMABLE_FUNCTIONS_SUPPORTED")
+endif()
 
 ############################################
 # OS support
@@ -16,13 +27,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 IF (WIN32)
     find_package(GTest REQUIRED)
 	set(OSLIBS "Ws2_32" "Rpcrt4")
-	set(DEBUGFLAGS "-DMOL_PROMISE_DEBUG -await")
+	set(DEBUGFLAGS "-DMOL_PROMISE_DEBUG -await ${FLAGS}")
 ELSEIF(UNIX)
 
     set(OSLIBS "pthread")
     find_package(GTest REQUIRED)
     find_package(PkgConfig)
-    set(DEBUGFLAGS "-g -DMOL_PROMISE_DEBUG ${GTEST_CFLAGS_OTHER}")
+    set(DEBUGFLAGS "-g -DMOL_PROMISE_DEBUG ${GTEST_CFLAGS_OTHER} ${FLAGS}")
 ENDIF ()
 
 ############################################
@@ -61,14 +72,16 @@ target_include_directories(reprocpp INTERFACE include/)
 # tests
 ############################################
 
+SET( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${LINKERFLAGS}" )
+
 add_executable(basic_test t/test.cpp)
 add_executable(after_test t/after.cpp)
 
 AddCompilerFlags(basic_test ${DEBUGFLAGS})
 AddCompilerFlags(after_test ${DEBUGFLAGS})
 
-target_link_libraries(basic_test ${GTEST_LIBRARY} ${OSLIBS} )
-target_link_libraries(after_test ${GTEST_LIBRARY} ${OSLIBS} )
+target_link_libraries(basic_test ${GTEST_LIBRARY} ${OSLIBS} ${STDLIB} )
+target_link_libraries(after_test ${GTEST_LIBRARY} ${OSLIBS} ${STDLIB} )
 
 add_test(NAME BasicTest COMMAND basic_test)
 add_test(NAME AfterTest COMMAND after_test)
