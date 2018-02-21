@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 echo "**********************************"
 echo "building $1 with" 
@@ -17,8 +18,6 @@ else
     mkdir -p build
     cd build
     cmake .. -DCMAKE_CXX_COMPILER=$CXX 
-    cat ./CMakeFiles/after_test.dir/flags.make
-    cat ./CMakeFiles/after_test.dir/link.txt
     make
     make test
     make install
