@@ -95,4 +95,3 @@ install(FILES ${HEADERS} DESTINATION include/reprocpp)
 install(FILES reprocpp.pc DESTINATION lib/pkgconfig)
 
 
-install(FILES reprocpp-config.cmake DESTINATION "lib/CMake/reprocpp" COMPONENT dev)
