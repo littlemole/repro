@@ -3,390 +3,288 @@
 
 #include "reprocpp/promise.h"
 
-/*
- * experimental example of combining promises. header only.
- *
- * provides an API "after" that combines 2-n promises
- * and returns a future to a combined result.
- *
- * public interface is:
- *
- *     template<class T1, class ... Args>
- *     auto after(T1 t1, Args ... args) noexcept;
- *
- * (this file is best groked bottom up)
- *
- */
 
 namespace repro     {
 
-namespace impl    {
+	template<class T>
+	class Both;
 
-
-template<class T>
-struct One;
-
-template<>
-struct One<void()>
-{
-	bool resolved;
-
-	One() noexcept
-		: resolved(false)
-	{}
-
-	template<class B,class T>
-	void resolve1(B& b, T& two) noexcept
+	template<>
+	class Both<void()>
 	{
-		this->resolved = true;
-		if ( two.resolved )
+	public:
+
+		auto future(Future<> f1, Future<> f2)
 		{
-			two.resolve2(b);
+			auto p = promise<>();
+
+			auto outstanding = std::make_shared<int>(2);
+
+			f1.then([p, outstanding]() { resolve(p, outstanding); });
+			f1.otherwise([p](const std::exception& ex) {p.reject(ex); });
+
+			f2.then([p, outstanding]() { resolve(p, outstanding); });
+			f2.otherwise([p](const std::exception& ex) {p.reject(ex); });
+
+			return p.future();
 		}
-	}
 
-	template<class B,class Two>
-	void resolve1_recursive(B& b,Two& two) noexcept
+	private:
+
+		template<class P>
+		static void resolve(P p, std::shared_ptr<int> outstanding)
+		{
+			(*outstanding)--;
+			if (*outstanding == 0)
+			{
+				p.resolve();
+			}
+		}
+	};
+
+
+
+	template<class F>
+	class Both<void(F)>
 	{
-		this->resolved = true;
-	}
+	public:
+
+		auto future(Future<> f1, Future<F> f2)
+		{
+			auto p = promise<F>();
+
+			auto value = std::make_shared<F>();
+			auto outstanding = std::make_shared<int>(2);
+
+			f1.then([p, value, outstanding]() { resolve(p, value, outstanding); });
+			f1.otherwise([p](const std::exception& ex) {p.reject(ex); });
+
+			f2.then([p, value, outstanding](F result) { resolve(p, value, outstanding, result); });
+			f2.otherwise([p](const std::exception& ex) {p.reject(ex); });
+
+			return p.future();
+		}
+
+		auto future(Future<F> f1, Future<> f2)
+		{
+			auto p = promise<F>();
+
+			auto value = std::make_shared<F>();
+			auto outstanding = std::make_shared<int>(2);
+
+			f1.then([p, value, outstanding](F result) { resolve(p, value, outstanding, result); });
+			f1.otherwise([p](const std::exception& ex) {p.reject(ex); });
+
+			f2.then([p, value, outstanding]() { resolve(p, value, outstanding); });
+			f2.otherwise([p](const std::exception& ex) {p.reject(ex); });
+
+			return p.future();
+		}
+
+	private:
+
+		template<class P, class T>
+		static void resolve(P p, std::shared_ptr<F> value, std::shared_ptr<int> outstanding, T t)
+		{
+			*value = t;
+			(*outstanding)--;
+			if (*outstanding == 0)
+			{
+				p.resolve(*value);
+			}
+		}
+
+		template<class P>
+		static void resolve(P p, std::shared_ptr<F> value, std::shared_ptr<int> outstanding)
+		{
+			(*outstanding)--;
+			if (*outstanding == 0)
+			{
+				p.resolve(*value);
+			}
+		}
+	};
 
 
-	template<class B, class ... Args>
-	void resolve2(B& b,Args&& ... args) const noexcept
+
+	template<class T1, class T2>
+	class Both<void(T1, T2)>
 	{
-		b->p.resolve(std::forward<Args>(args)...);
+	public:
+		typedef std::tuple<T1, T2> combined_t;
+
+		auto future(Future<T1> f1, Future<T2> f2)
+		{
+			auto p = promise<combined_t>();
+
+			auto values = std::make_shared<combined_t>();
+			auto outstanding = std::make_shared<int>(2);
+
+			f1.then([p, values, outstanding](T1 result)
+			{
+				resolve<0>(p, values, outstanding, result);
+			});
+			f1.otherwise([p](const std::exception& ex) {p.reject(ex); });
+
+			f2.then([p, values, outstanding](T2 result)
+			{
+				resolve<1>(p, values, outstanding, result);
+			});
+			f2.otherwise([p](const std::exception& ex) {p.reject(ex); });
+
+			return p.future();
+		}
+
+	private:
+
+		template<int I, class P, class T>
+		static void resolve(P p, std::shared_ptr<combined_t> values,
+			std::shared_ptr<int> outstanding, T t)
+		{
+			std::get<I>(*values) = t;
+			(*outstanding)--;
+			if (*outstanding == 0)
+			{
+				p.resolve(*values);
+			}
+		}
+	};
+
+	template<class T, int I = 1, class E = void>
+	class Assignor;
+
+	template<class T, int I>
+	class Assignor<T, I, typename std::enable_if<(I < std::tuple_size<T>::value)>::type>
+	{
+	public:
+		template<class ... Args>
+		static void assign(std::shared_ptr<T>& values, std::tuple<Args...>& result)
+		{
+			std::get<I>(*values) = std::get<I - 1>(result);
+
+			Assignor<T, I + 1>::assign(values, result);
+		}
+	};
+
+	template<class T, int I>
+	class Assignor<T, I, typename std::enable_if<!(I<std::tuple_size<T>::value)>::type>
+	{
+	public:
+
+		template<class ... Args>
+		static void assign(std::shared_ptr<T> values, std::tuple<Args...> result)
+		{
+		}
+	};
+
+
+	template<class T1, class T2, class ... Args>
+	class Both<void(T1, std::tuple<T2, Args...>)>
+	{
+	public:
+		typedef std::tuple<T1, T2, Args...> combined_t;
+
+		auto future(Future<T1> f1, Future<std::tuple<T2, Args...>> f2)
+		{
+			auto p = promise<combined_t>();
+
+			auto values = std::make_shared<combined_t>();
+
+			auto outstanding = std::make_shared<int>(2);
+
+			f1.then([p, values, outstanding](T1 result)
+			{
+				resolve(p, values, outstanding, result);
+			});
+			f1.otherwise([p](const std::exception& ex) {p.reject(ex); });
+
+			f2.then([p, values, outstanding](std::tuple<T2, Args...> result)
+			{
+				resolve(p, values, outstanding, result);
+			});
+			f2.otherwise([p](const std::exception& ex) {p.reject(ex); });
+
+			return p.future();
+		}
+
+	private:
+
+		template<class P>
+		static void resolve(P p, std::shared_ptr<combined_t> values,
+			std::shared_ptr<int> outstanding, T1 t)
+		{
+			std::get<0>(*values) = t;
+			(*outstanding)--;
+			if (*outstanding == 0)
+			{
+				p.resolve(*values);
+			}
+		}
+
+		static void resolve(Promise<combined_t> p, std::shared_ptr<combined_t> values,
+			std::shared_ptr<int> outstanding, std::tuple<T2, Args...> result)
+		{
+			Assignor<combined_t>::assign(values, result);
+			(*outstanding)--;
+			if (*outstanding == 0)
+			{
+				p.resolve(*values);
+			}
+		}
+
+	};
+
+
+	inline auto both(Future<> f1, Future<> f2)
+	{
+		Both<void()> b;
+		return b.future(f1, f2);
 	}
 
-	template<class B, class ... VArgs>
-	void resolve2_recursive(B& b,VArgs&& ... args) const noexcept
-	{
-		b->p.resolve(std::forward<VArgs>(args)...);
-	}
-
-	template<class P>
-	void hook1(P ptr, Future<> f1) noexcept
-	{
-		f1.then([ptr]() {
-			ptr->one.resolve1(ptr,ptr->two);
-		})
-		.otherwise([ptr](const std::exception& ex){
-			ptr->reject(ex);
-		});
-	}
-
-	template<class P>
-	void hook2(P ptr, Future<> f1) noexcept
-	{
-		f1.then([ptr]() {
-			ptr->two.resolve1(ptr,ptr->one);
-		})
-		.otherwise([ptr](const std::exception& ex){
-			ptr->reject(ex);
-		});
-	}
 
 	template<class T>
-	static auto promise1() noexcept
+	auto both(Future<> f1, Future<T> f2)
 	{
-		return T:: template promise2<>();
-	}
-
-	template<class ... VArgs>
-	static auto promise2() noexcept
-	{
-		return promise<VArgs...>();
-	}
-};
-
-
-template<class T>
-struct First;
-
-template<>
-struct First<void()> : public One<void()>
-{
-
-};
-
-template<class T>
-struct Second;
-
-template<>
-struct Second<void()> : public One<void()>
-{
-
-};
-
-template<class T, class ... Args>
-struct First<void(T,Args...)> : public First<void(Args...)>
-{
-	typedef First<void(Args...)> Base;
-
-	T value;
-
-	template<class B,class Two>
-	void resolve1(B& b,Two& two,T&& t,Args&& ... args ) noexcept
-	{
-		if ( two.resolved )
-		{
-			two.resolve2(b,std::forward<T>(t),std::forward<Args>(args)...);
-		}
-		else {
-			resolve1_recursive(b,two,std::forward<T>(t),std::forward<Args>(args)...);
-		}
-	}
-
-	template<class B,class Two>
-	void resolve1_recursive(B& b,Two& two,T&& t, Args&& ... args) noexcept
-	{
-		value = t;
-		Base::resolve1_recursive(b,two,std::forward<Args>(args)...);
-	}
-
-	template<class B, class ... VArgs>
-	void resolve2(B& b,VArgs&& ... args) const noexcept
-	{
-		resolve2_recursive(b,std::forward<VArgs>(args)...);
-	}
-
-	template<class B, class ... VArgs>
-	void resolve2_recursive(B& b,VArgs&& ... args) const noexcept
-	{
-		Base::resolve2_recursive(b,std::move(value),std::forward<VArgs>(args)...);
+		Both<void(T)> b;
+		return b.future(f1, f2);
 	}
 
 
-	template<class P>
-	void hook1(P ptr, Future<T,Args...> f1) noexcept
+	template<class T>
+	auto both(Future<T> f1, Future<> f2)
 	{
-		f1.then([ptr](T&& t,Args&&... args) {
-			ptr->one.resolve1(ptr,ptr->two,std::forward<T>(t),std::forward<Args>(args)...);
-		})
-		.otherwise([ptr](const std::exception& ex){
-			ptr->reject(ex);
-		});
-	}
-
-	template<class P>
-	void hook2(P ptr, Future<T,Args...> f1) noexcept
-	{
-		f1.then([ptr](T&& t, Args&&...args) {
-			ptr->two.resolve1(ptr,ptr->one,std::forward<T>(t),std::forward<Args>(args)...);
-		})
-		.otherwise([ptr](const std::exception& ex){
-			ptr->reject(ex);
-		});
-	}
-
-	template<class Two>
-	static auto promise1() noexcept
-	{
-		return Two:: template promise2<T,Args...>();
-	}
-
-	template<class ... VArgs>
-	static Promise<VArgs..., T, Args...> promise2() noexcept
-	{
-		return promise<VArgs...,T,Args...>();
-	}
-};
-
-
-template<class T, class ... Args>
-struct Second<void(T,Args...)> : public Second<void(Args...)>
-{
-	typedef Second<void(Args...)> Base;
-
-	T value;
-
-	template<class B,class Two>
-	void resolve1(B& b,Two& two,T&& t,Args&& ... args ) noexcept
-	{
-		if ( two.resolved )
-		{
-			two.resolve2(b,std::forward<T>(t),std::forward<Args>(args)...);
-		}
-		else {
-			resolve1_recursive(b,two,std::forward<T>(t),std::forward<Args>(args)...);
-		}
-	}
-
-	template<class B,class Two>
-	void resolve1_recursive(B& b,Two& two,T&& t, Args&& ... args) noexcept
-	{
-		value = t;
-		Base::resolve1_recursive(b,two,std::forward<Args>(args)...);
-	}
-
-	template<class B, class ... VArgs>
-	void resolve2(B& b,VArgs&& ... args) const noexcept
-	{
-		resolve2_recursive(b,std::forward<VArgs>(args)...);
-	}
-
-	template<class B, class ... VArgs>
-	void resolve2_recursive(B& b,VArgs&& ... args) const noexcept
-	{
-		Base::resolve2_recursive(b,std::forward<VArgs>(args)...,std::move(value));
+		Both<void(T)> b;
+		return b.future(f1, f2);
 	}
 
 
-	template<class P>
-	void hook1(P ptr, Future<T,Args...> f1) noexcept
+	template<class T1, class T2>
+	auto both(Future<T1> f1, Future<T2> f2)
 	{
-		f1.then([ptr](T&& t,Args&&... args) {
-			ptr->one.resolve1(ptr,ptr->two,std::forward<T>(t),std::forward<Args>(args)...);
-		})
-		.otherwise([ptr](const std::exception& ex){
-			ptr->reject(ex);
-		});
+		Both<void(T1, T2)> b;
+		return b.future(f1, f2);
 	}
 
-	template<class P>
-	void hook2(P ptr, Future<T,Args...> f1) noexcept
+
+	template<class T1, class T2, class ... Args>
+	auto both(Future<T1> f1, Future<std::tuple<T2, Args...>> f2)
 	{
-		f1.then([ptr](T&& t, Args&&...args) {
-			ptr->two.resolve1(ptr,ptr->one,std::forward<T>(t),std::forward<Args>(args)...);
-		})
-		.otherwise([ptr](const std::exception& ex){
-			ptr->reject(ex);
-		});
+		Both<void(T1, std::tuple<T2, Args...>)> b;
+		return b.future(f1, f2);
 	}
 
-	template<class Two>
-	static auto promise1() noexcept
+	template<class T1, class T2>
+	auto after(T1 t1, T2 t2) noexcept
 	{
-		return Two:: template promise2<T,Args...>();
+		return both(t1, t2);
 	}
 
-	template<class ... VArgs>
-	static auto promise2() noexcept
+	template<class T1, class ... Args>
+	auto after(T1 t1, Args ... args) noexcept
 	{
-		return promise<VArgs...,T,Args...>();
-	}
-};
-
-
-template<class T>
-struct BothMixin : public std::enable_shared_from_this<T>
-{
-	void reject(const std::exception& ex) noexcept
-	{
-		T* that = static_cast<T*>(this);
-		that->p.reject(ex);
+		return both(t1, after(args...));
 	}
 
-	auto future() noexcept 
-	{
-		T* that = static_cast<T*>(this);
-		return that->p.future();
-	}
-
-	template<class F1, class F2>
-	void hook(F1 f1, F2 f2) noexcept
-	{
-		T* that = static_cast<T*>(this);
-		typename T::Ptr ptr = that->shared_from_this();
-
-		ptr->one.hook1(ptr,f1);
-		ptr->two.hook2(ptr,f2);
-	}
-
-	static std::shared_ptr<T> create() noexcept
-	{
-		typename T::Ptr p;
-		try
-		{
-			p = typename T::Ptr(new T);
-		}
-		catch(...)
-		{
-			std::terminate();
-		}
-		return p;
-	}
-};
-
-
-template<class T>
-struct Both
-{
-	typedef Promise<> PromiseType;
-	Promise<> p;
-};
-
-
-template<class T1,class ...Args>
-struct Both<void(First<void(T1)>,Second<void(Args...)>)>
-: public BothMixin<Both<void(First<void(T1)>,Second<void(Args...)>)>>
-{
-	typedef std::shared_ptr<Both<void(First<void(T1)>,Second<void(Args...)>)>> Ptr;
-
-	First<void(T1)> one;
-	Second<void(Args...)> two;
-
-	typedef Promise<T1,Args...> PromiseType;
-	PromiseType p;
-
-	Both() noexcept
-		: p(First<void(T1)>:: template promise1<Second<void(Args...)>>())
-	{}
-};
-
-
-template<class ...Args>
-struct Both<void(First<void()>,Second<void(Args...)>)>
-: public BothMixin<Both<void(First<void()>,Second<void(Args...)>)>>
-{
-	typedef std::shared_ptr<Both<void(First<void()>,Second<void(Args...)>)>> Ptr;
-
-	First<void()> one;
-	Second<void(Args...)> two;
-
-	typedef Promise<Args...> PromiseType;
-	Promise<Args...> p;
-
-	Both() noexcept
-		: p(First<void()>:: template promise1<Second<void(Args...)>>())
-	{}
-};
-
-} // end namespace impl
-
-template<class ...Args>
-Future<Args...> both( Future<> f1, Future<Args...> f2) noexcept
-{
-	auto b = impl::Both<void(impl::First<void()>,impl::Second<void(Args...)>)>::create();
-
-	b->hook(f1,f2);
-
-	return b->p.future();
-}
-
-
-template<class T1, class ...Args>
-Future<T1,Args...> both( Future<T1> f1, Future<Args...> f2) noexcept
-{
-	auto b = impl::Both<void(impl::First<void(T1)>,impl::Second<void(Args...)>)>::create();
-
-	b->hook(f1,f2);
-
-	return b->p.future();
-}
-
-
-template<class T1, class T2>
-auto after(T1 t1, T2 t2) noexcept
-{
-	return both(t1,t2);
-}
-
-template<class T1, class ... Args>
-auto after(T1 t1, Args ... args) noexcept
-{
-	return both( t1, after(args...) );
-}
 
 
 } // end namespace repro
