@@ -28,6 +28,12 @@ IF (WIN32)
     find_package(GTest REQUIRED)
 	set(OSLIBS "Ws2_32" "Rpcrt4")
 	set(DEBUGFLAGS "-DMOL_PROMISE_DEBUG -await ${FLAGS}")
+
+	find_library(GTESTD gtestd)
+
+	set( GTEST_LIBRARY debug     ${GTESTD}
+					   optimized ${GTEST_LIBRARY} )
+
 ELSEIF(UNIX)
 
     set(OSLIBS "pthread")
