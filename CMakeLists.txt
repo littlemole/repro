@@ -61,6 +61,8 @@ IF (WIN32)
 
     set(BUILDFLAGS " ${FLAGS}")
 
+	set(LIBS ${GTEST_LIBRARIES} ${STDLIB}  )
+
 ENDIF ()
 
 
