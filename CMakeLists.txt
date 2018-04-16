@@ -1,10 +1,33 @@
+############################################
+# preamble
+############################################
 cmake_minimum_required(VERSION 2.8.9)
+cmake_policy(SET CMP0054 NEW)
 project(reprocpp)
 include(CTest)
+
+############################################
+# c++ std
+############################################
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+############################################
+# debug mode produces libs with d suffix
+############################################
+
+if(NOT CMAKE_DEBUG_POSTFIX)
+  set(CMAKE_DEBUG_POSTFIX d)
+endif()
+
+############################################
+# basic dependecies
+############################################
+
+find_package(GTest REQUIRED)
+
 
 ############################################
 # clang support
@@ -12,6 +35,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(LINKERFLAGS "")
 set(STDLIB "")
+set(FLAGS "")
+
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set(STDLIB "c++abi")
     set(LINKERFLAGS "-stdlib=libc++ -fcoroutines-ts  -std=c++14")
@@ -19,56 +44,52 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 endif()
 
 ############################################
-# OS support
+# OS support (Linux/Windows)
 ############################################
-
-# default to UNIX
 
 IF (WIN32)
-    find_package(GTest REQUIRED)
+
 	set(OSLIBS "Ws2_32" "Rpcrt4")
-	set(DEBUGFLAGS "-DMOL_PROMISE_DEBUG -await ${FLAGS}")
 
-	find_library(GTESTD gtestd)
+	set(BUILDFLAGS "-await ${FLAGS}")
 
-	set( GTEST_LIBRARY debug     ${GTESTD}
-					   optimized ${GTEST_LIBRARY} )
+	set(LIBS ${GTEST_LIBRARIES} ${STDLIB}  )
 
-ELSEIF(UNIX)
+ ELSEIF (UNIX)
 
     set(OSLIBS "pthread")
-    find_package(GTest REQUIRED)
-    find_package(PkgConfig)
-    set(DEBUGFLAGS "-g -DMOL_PROMISE_DEBUG ${GTEST_CFLAGS_OTHER} ${FLAGS}")
+
+    set(BUILDFLAGS " ${FLAGS}")
+
 ENDIF ()
 
-############################################
-# macros
-############################################
-
-macro(AddCompilerFlags target flags)
-    get_target_property(CF ${target} COMPILE_FLAGS)
-    if(CF STREQUAL "CF-NOTFOUND")
-        SET(CF "") # set to empty string
-    else()
-        SET(CF "${CF} ") # a space to cleanly separate from existing content
-    endif()
-
-	SET(CF "${CF} ${flags}" )
-    set_target_properties(${target} PROPERTIES COMPILE_FLAGS ${CF} )
-endmacro()
 
 ############################################
-# includes
+# set linker and compiler flags
+############################################
+
+set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${LINKERFLAGS}" )
+set(CMAKE_CXX_FLAGS_DEBUG  	"${CMAKE_CXX_FLAGS_DEBUG} -DMOL_PROMISE_DEBUG")
+set(CMAKE_CXX_FLAGS  		"${CMAKE_CXX_FLAGS} ${BUILDFLAGS}")
+
+
+############################################
+# include directories
 ############################################
 
 include_directories(include)
 include_directories(${GTEST_INCLUDE_DIR})
 
-file(GLOB HEADERS "include/reprocpp/*.h")
 
 ############################################
-# target library
+# sources
+############################################
+
+file(GLOB_RECURSE HEADERS "include/reprocpp/*.h")
+
+
+############################################
+# lib target
 ############################################
 
 add_library(reprocpp INTERFACE)
@@ -78,26 +99,28 @@ target_include_directories(reprocpp INTERFACE include/)
 # tests
 ############################################
 
-SET( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${LINKERFLAGS}" )
-
 add_executable(basic_test t/test.cpp)
 add_executable(after_test t/after.cpp)
 
-AddCompilerFlags(basic_test ${DEBUGFLAGS})
-AddCompilerFlags(after_test ${DEBUGFLAGS})
+############################################
+# libs for tests
+############################################
 
-target_link_libraries(basic_test ${GTEST_LIBRARY} ${OSLIBS} ${STDLIB} )
-target_link_libraries(after_test ${GTEST_LIBRARY} ${OSLIBS} ${STDLIB} )
+target_link_libraries(basic_test ${LIBS} ${OSLIBS} )
+target_link_libraries(after_test ${LIBS} ${OSLIBS} )
+
+
+############################################
+# run tests
+############################################
 
 add_test(NAME BasicTest COMMAND basic_test)
 add_test(NAME AfterTest COMMAND after_test)
- 
+
 ############################################
-# install
+# install rules
 ############################################
 
 install(FILES ${HEADERS} DESTINATION include/reprocpp)
 
 install(FILES reprocpp.pc DESTINATION lib/pkgconfig)
-
-
