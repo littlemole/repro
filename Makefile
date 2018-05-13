@@ -11,6 +11,10 @@ BUILDCHAIN = make
 CONTAINER = $(shell echo "$(LIBNAME)_$(CXX)_$(BUILDCHAIN)" | sed 's/++/pp/')
 IMAGE = littlemole/$(CONTAINER)
 
+BASE_CONTAINER = $(shell echo "devenv_$(CXX)_$(BUILDCHAIN)" | sed 's/++/pp/')
+BASE_IMAGE = littlemole\/$(BASE_CONTAINER)
+
+
 all: test
 
 test-build: ## make the test binaries
@@ -41,17 +45,19 @@ install:
 remove: 
 	-rm -rf $(DESTDIR)/$(PREFIX)/include/$(LIBNAME)
 	-rm $(DESTDIR)/$(PREFIX)/lib/pkgconfig/$(LIBNAME).pc
-	
-image: 
-	docker build -t $(IMAGE) . -fDockerfile  --build-arg CXX=$(CXX) --build-arg BUILDCHAIN=$(BUILDCHAIN)
 
 
 # docker stable testing environment
+	
+image: update-dockerfile
+	docker build -t $(IMAGE) . -fDockerfile  --build-arg CXX=$(CXX) --build-arg BUILDCHAIN=$(BUILDCHAIN)
 
-clean-image: 
+update-dockerfile:
+	/bin/sed -i "s/FROM .*/FROM ${BASE_IMAGE}/" Dockerfile
+
+clean-image: update-dockerfile
 	docker build -t $(IMAGE) . --no-cache -fDockerfile --build-arg CXX=$(CXX) --build-arg BUILDCHAIN=$(BUILDCHAIN)
 		                                        
-bash: rmc image
 	docker run --name $(CONTAINER) --security-opt seccomp=unconfined  -ti  $(IMAGE) bash
 
 stop: 
