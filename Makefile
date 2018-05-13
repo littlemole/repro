@@ -52,7 +52,7 @@ clean-image:
 	docker build -t $(IMAGE) . --no-cache -fDockerfile --build-arg CXX=$(CXX) --build-arg BUILDCHAIN=$(BUILDCHAIN)
 		                                        
 bash: rmc image
-	docker run --name $(CONTAINER) -ti  $(IMAGE) bash
+	docker run --name $(CONTAINER) --security-opt seccomp=unconfined  -ti  $(IMAGE) bash
 
 stop: 
 	-docker stop $(CONTAINER)
