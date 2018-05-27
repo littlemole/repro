@@ -172,7 +172,8 @@ public:
 		return Future<Args...>(*this);
 	}
 
-	void resolve(Args ... args)
+	template<class ... VArgs>
+	void resolve(VArgs&& ... args)
 	{
 		// stabilize ref count so we have 
 		// a valid this pointer until end of
@@ -181,7 +182,7 @@ public:
 
 		try
 		{
-			cb_(args...);
+			cb_(std::forward<VArgs&&>(args)...);
 		}
 		catch (const std::exception& e)
 		{
@@ -261,9 +262,10 @@ public:
     }
 
     /// resolve the future and invoke the completion handler
-    void resolve( Args ... args ) const noexcept 
+	template<class ... VArgs>
+    void resolve( VArgs&& ... args ) const noexcept 
     {
-        state_->resolve(args...);
+        state_->resolve(std::forward<VArgs&&>(args)...);
     }
 
     void resolve( Future<Args...>& f ) const noexcept 

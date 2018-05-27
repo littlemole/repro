@@ -176,9 +176,10 @@ public:
 	Promise() noexcept
 	{}
 
-	void return_value(T value)
+	template<class P>
+	void return_value(P&& value)
 	{
-		this->resolve(value);
+		this->resolve(std::forward<P&&>(value));
 	}
 	
 };

@@ -252,7 +252,7 @@ private:
 	int a_;
 	int b_;
 };
-/*
+
 TEST_F(BasicTest, ThenableWithValueNotConstructibleMoveAssignableOnly) {
 
 	Loop loop;
@@ -281,7 +281,7 @@ TEST_F(BasicTest, ThenableWithValueNotConstructibleMoveAssignableOnly) {
 	MOL_TEST_ASSERT_CNTS(0, 0);
 	EXPECT_EQ(0,testStructCount);
 }
-*/
+
 
 template<class F>
 Future<int> forEach(int start, int end, F f, std::shared_ptr<int> result = std::make_shared<int>(0) )
@@ -855,7 +855,7 @@ TEST_F(BasicTest, CoroutineWithValueNotConstructibleMovableOnly) {
 
 }
 
-/*
+
 Future<TestStruct3> coroutineWithValueNotConstructibleMoveAssignableOnly(Loop& loop)
 {
 	co_await loop.nextTick();
@@ -887,7 +887,6 @@ TEST_F(BasicTest, CoroutineWithValueNotConstructibleMoveAssignableOnly) {
 	EXPECT_EQ(0, testStructCount);
 
 }
-*/
 
 TEST_F(BasicTest, PromiseMonadLaw1LeftIdentity) {
 
