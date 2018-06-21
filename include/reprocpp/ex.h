@@ -7,6 +7,7 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
+#include <functional>
 
 /*
  * mainly provides promise base exception.
