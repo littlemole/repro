@@ -103,7 +103,18 @@ public:
 	template<class E>
 	Future<Args...>& otherwise(E e) noexcept
 	{
-		promise_->err_ = e;
+		promise_->err_ = [e](const std::exception& ex)
+		{
+			const WrappedException* wep = dynamic_cast<const WrappedException*>(&ex);
+			if(wep)
+			{
+				wep->raise(e);
+			}
+			else
+			{
+				e(ex);
+			}
+		};
 		return *(Future<Args...>*)(this);
 	}
 
@@ -279,9 +290,17 @@ public:
     }
 
     /// reject the future and specify exception
-    void reject(const std::exception& e) const noexcept 
+	template<class E>
+    void reject(const E& e) const noexcept 
     {
-        state_->reject(e);
+		std::cout << "wrapping: " << typeid(e).name() << " " << e.what() << std::endl;
+        state_->reject(wrap_exception(e));
+    }
+
+    void reject(std::exception_ptr eptr) const noexcept 
+    {
+		std::cout << "wrapping eptr " << std::endl;
+		state_->reject(wrap_exception(eptr));
     }
 
 protected:

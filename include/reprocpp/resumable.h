@@ -153,17 +153,7 @@ public:
 	void unhandled_exception()
 	{
 		auto eptr = std::current_exception();
-		if (eptr)
-		{
-			try
-			{
-				std::rethrow_exception(eptr);
-			}
-			catch (const std::exception& ex)
-			{
-				this->reject(ex);
-			}
-		}
+		this->reject(eptr);
 	}
 };
 
@@ -237,8 +227,15 @@ public:
 
 			this->promise_->err_ = [this](const std::exception& ex)
 			{
-				WrappedEx we(ex);
-				value_.set(std::make_exception_ptr(we));
+				const WrappedException* wep = dynamic_cast<const WrappedException*>(&ex);
+				if(wep)
+				{
+					value_.set(wep->ptr());
+				}
+				else
+				{
+					throw Ex("unsupported passing raw ex");
+				}
 			};
 		}
 	}
@@ -279,12 +276,19 @@ public:
 			resume_cb.resume();
 		});
 
-		this->otherwise([resume_cb, this](const std::exception& ex)
+		this->promise_->err_ = [resume_cb, this](const std::exception& ex)
 		{
-			WrappedEx we(ex);
-			value_.set(std::make_exception_ptr(we));
+			const WrappedException* wep = dynamic_cast<const WrappedException*>(&ex);
+			if(wep)
+			{
+				value_.set(wep->ptr());
+			}
+			else
+			{
+					throw Ex("unsupported passing raw ex");
+			}
 			resume_cb.resume();
-		});
+		};
 	}
 
 private:
@@ -311,8 +315,15 @@ public:
 
 			this->promise_->err_ = [this](const std::exception& ex)
 			{
-				WrappedEx we(ex);
-				value_.set(std::make_exception_ptr(we));
+				const WrappedException* wep = dynamic_cast<const WrappedException*>(&ex);
+				if(wep)				
+				{
+					value_.set(wep->ptr());
+				}
+				else
+				{
+					throw Ex("unsupported passing raw ex");
+				}				
 			};
 		}
 	}
@@ -353,12 +364,19 @@ public:
 			resume_cb.resume();
 		});
 
-		this->otherwise([resume_cb, this](const std::exception& ex)
+		this->promise_->err_ = [resume_cb, this](const std::exception& ex)
 		{
-			WrappedEx we(ex);
-			value_.set(std::make_exception_ptr(we));
+			const WrappedException* wep = dynamic_cast<const WrappedException*>(&ex);
+			if(wep)
+			{
+				value_.set(wep->ptr());
+			}
+			else
+			{
+					throw Ex("unsupported passing raw ex");
+			}			
 			resume_cb.resume();
-		});
+		};
 	}
 
 private:
@@ -386,8 +404,15 @@ public:
 
 			this->promise_->err_ = [this](const std::exception& ex)
 			{
-				WrappedEx we(ex);
-				value_.set(std::make_exception_ptr(we));
+				const WrappedException* wep = dynamic_cast<const WrappedException*>(&ex);
+				if(wep)	
+				{
+					value_.set(wep->ptr());
+				}
+				else
+				{
+					throw Ex("unsupported passing raw ex");
+				}				
 			};
 		}
 	}
@@ -425,12 +450,20 @@ public:
 			resume_cb.resume();
 		});
 
-		this->otherwise([resume_cb, this](const std::exception& ex)
+		this->promise_->err_ = [resume_cb, this](const std::exception& ex)
 		{
-			WrappedEx we(ex);
-			value_.set(std::make_exception_ptr(we));
+			const WrappedException* wep = dynamic_cast<const WrappedException*>(&ex);
+			if(wep)
+			{
+				value_.set(wep->ptr());
+			}
+			else
+			{
+				std::cout << typeid(ex).name() << " " << ex.what() << std::endl;
+				throw Ex("unsupported passing raw ex");
+			}			
 			resume_cb.resume();
-		});
+		};
 	}
 
 private:

@@ -49,7 +49,64 @@ public:
         
     std::string msg;
 };
+/*
+class WrappedException : public Ex
+{
+public:
+	WrappedException()
+	{}
 
+	virtual std::exception_ptr ptr() const = 0;
+	virtual void raise(const std::function<void(const std::exception&)> fun) const
+	 = 0;
+
+};
+*/
+class WrappedException : public Ex
+{
+public:
+
+	template<class E>
+	WrappedException(const E& e)
+	: e_(std::make_exception_ptr(e))
+	{
+	}
+
+	WrappedException(const std::exception_ptr& e)
+	: e_(e)
+	{
+	}
+
+	virtual std::exception_ptr ptr() const
+	{
+		return e_;
+	}
+
+	virtual void raise(const std::function<void(const std::exception&)> fun) const
+	{
+		if (e_)
+		{
+			try
+			{
+				std::rethrow_exception(e_);
+			}
+			catch (const std::exception& ex)
+			{
+				fun(ex);
+			}
+		}		
+	}
+
+private:
+	std::exception_ptr e_;
+};
+
+template<class E>
+WrappedException wrap_exception(const E& e)
+{
+	return WrappedException(e);
+}
+/*
 class WrappedEx : public Ex
 {
 public:
@@ -99,9 +156,9 @@ bool isa(const std::exception& ex)
 	return false;
 }
 
+*/
 
-
-}}
+}
 
 #endif
 
