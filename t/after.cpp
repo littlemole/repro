@@ -41,7 +41,7 @@ TEST_F(AfterTest, twoVoidThenables) {
 			c++;
 		})
 	)
-	.then([&c](){
+	.then([&c](std::tuple<>){
 		 EXPECT_EQ(c,2);
 		 c++;
 	});
@@ -126,10 +126,10 @@ TEST_F(AfterTest, ValueThenableAndVoidThenable) {
 			c++;
 		})
 	)
-	.then([&c](int x){
+	.then([&c](std::tuple<int> x){
 		EXPECT_EQ(c,2);
-		EXPECT_EQ(x,42);
-		c += x;
+		EXPECT_EQ(std::get<0>(x),42);
+		c += std::get<0>(x);
 	});
 
 	loop.run();
@@ -153,10 +153,10 @@ TEST_F(AfterTest, VoidThenableAndValueThenable) {
 			return 42;
 		})
 	)
-	.then([&c](int x){
+	.then([&c](std::tuple<int> x){
 		EXPECT_EQ(c,2);
-		EXPECT_EQ(x,42);
-		c += x;
+		EXPECT_EQ(std::get<0>(x),42);
+		c += std::get<0>(x);
 	});
 
 	loop.run();
@@ -403,9 +403,9 @@ TEST_F(AfterTest, OneValueAndTwoVoids) {
 			c++;
 		})
 	)
-	.then([&c](int x)
+	.then([&c](std::tuple<int> x)
 	{
-		c+=x;
+		c+=std::get<0>(x);
 	});
 
 	loop.run();
@@ -434,9 +434,9 @@ TEST_F(AfterTest, OneVoidOneValueOneVoid) {
 			c++;
 		})
 	)
-	.then([&c](int x)
+	.then([&c](std::tuple<int> x)
 	{
-		c+=x;
+		c+=std::get<0>(x);
 	});
 
 	loop.run();
@@ -464,9 +464,9 @@ TEST_F(AfterTest, VoidVoidValue) {
 			return 42;
 		})
 	)
-	.then([&c](int x)
+	.then([&c](std::tuple<int> x)
 	{
-		c+=x;
+		c+=std::get<0>(x);
 	});
 
 	loop.run();
@@ -494,7 +494,7 @@ TEST_F(AfterTest, ThreeVoids) {
 			c++;
 		})
 	)
-	.then([&c]()
+	.then([&c](std::tuple<>)
 	{
 		EXPECT_EQ(c,3);
 		c++;
@@ -529,7 +529,7 @@ TEST_F(AfterTest, FourVoids) {
 			c++;
 		})
 	)
-	.then([&c]()
+	.then([&c](std::tuple<>)
 	{
 		EXPECT_EQ(c,4);
 		c++;
@@ -565,10 +565,10 @@ TEST_F(AfterTest, ValueAndThreeVoids) {
 			c++;
 		})
 	)
-	.then([&c](int x)
+	.then([&c](std::tuple<int> x)
 	{
 		EXPECT_EQ(c,3);
-		c+=x;
+		c+=std::get<0>(x);
 	});
 
 	loop.run();

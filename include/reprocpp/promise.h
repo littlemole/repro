@@ -118,6 +118,7 @@ public:
 		return *(Future<Args...>*)(this);
 	}
 
+
 protected:
 
 	PromiseState<Args...>* promise_;

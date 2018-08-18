@@ -14,9 +14,11 @@ namespace repro     {
 	{
 	public:
 
+		typedef std::tuple<> combined_t;
+
 		auto future(Future<> f1, Future<> f2)
 		{
-			auto p = promise<>();
+			auto p = promise<combined_t>();
 
 			auto outstanding = std::make_shared<int>(2);
 			auto rejected = std::make_shared<bool>(false);
@@ -25,6 +27,22 @@ namespace repro     {
 			f1.otherwise([p,rejected](const std::exception& ex) {reject(p,rejected,ex); });
 
 			f2.then([p, rejected, outstanding]() { resolve(p, rejected, outstanding); });
+			f2.otherwise([p,rejected](const std::exception& ex) { reject(p,rejected,ex); });
+
+			return p.future();
+		}
+
+		auto future(Future<> f1, Future<std::tuple<>> f2)
+		{
+			auto p = promise<combined_t>();
+
+			auto outstanding = std::make_shared<int>(2);
+			auto rejected = std::make_shared<bool>(false);
+
+			f1.then([p, rejected, outstanding]() { resolve(p, rejected, outstanding); });
+			f1.otherwise([p,rejected](const std::exception& ex) {reject(p,rejected,ex); });
+
+			f2.then([p, rejected, outstanding](std::tuple<>) { resolve(p, rejected, outstanding); });
 			f2.otherwise([p,rejected](const std::exception& ex) { reject(p,rejected,ex); });
 
 			return p.future();
@@ -43,7 +61,7 @@ namespace repro     {
 			(*outstanding)--;
 			if (*outstanding == 0)
 			{
-				p.resolve();
+				p.resolve(combined_t());
 			}
 		}
 
@@ -68,18 +86,21 @@ namespace repro     {
 	{
 	public:
 
+		typedef std::tuple<F> combined_t;
+
 		auto future(Future<> f1, Future<F> f2)
 		{
-			auto p = promise<F>();
+			auto p = promise<combined_t>();
 
-			auto value = std::make_shared<F>();
+			//auto value = std::make_shared<F>();
+			auto values = std::make_shared<combined_t>();
 			auto outstanding = std::make_shared<int>(2);
 			auto rejected = std::make_shared<bool>(false);
 
-			f1.then([p, rejected, value, outstanding]() { resolve(p, rejected, value, outstanding); });
+			f1.then([p, rejected, values, outstanding]() { resolve(p, rejected, values, outstanding); });
 			f1.otherwise([p, rejected](const std::exception& ex) {reject(p,rejected,ex); });
 
-			f2.then([p, rejected, value, outstanding](F result) { resolve(p, rejected, value, outstanding, result); });
+			f2.then([p, rejected, values, outstanding](F result) { resolve(p, rejected, values, outstanding, result); });
 			f2.otherwise([p, rejected](const std::exception& ex) {reject(p,rejected,ex); });
 
 			return p.future();
@@ -87,16 +108,35 @@ namespace repro     {
 
 		auto future(Future<F> f1, Future<> f2)
 		{
-			auto p = promise<F>();
+			auto p = promise<combined_t>();
 
-			auto value = std::make_shared<F>();
+			//auto value = std::make_shared<F>();
+			auto values = std::make_shared<combined_t>();
 			auto outstanding = std::make_shared<int>(2);
 			auto rejected = std::make_shared<bool>(false);
 
-			f1.then([p, rejected, value, outstanding](F result) { resolve(p, rejected, value, outstanding, result); });
+			f1.then([p, rejected, values, outstanding](F result) { resolve(p, rejected, values, outstanding, result); });
 			f1.otherwise([p, rejected](const std::exception& ex) {reject(p,rejected,ex); });
 
-			f2.then([p, rejected, value, outstanding]() { resolve(p, rejected, value, outstanding); });
+			f2.then([p, rejected, values, outstanding]() { resolve(p, rejected, values, outstanding); });
+			f2.otherwise([p, rejected](const std::exception& ex) {reject(p,rejected,ex); });
+
+			return p.future();
+		}
+
+		auto future(Future<F> f1, Future<std::tuple<>> f2)
+		{
+			auto p = promise<combined_t>();
+
+			//auto value = std::make_shared<F>();
+			auto values = std::make_shared<combined_t>();
+			auto outstanding = std::make_shared<int>(2);
+			auto rejected = std::make_shared<bool>(false);
+
+			f1.then([p, rejected, values, outstanding](F result) { resolve(p, rejected, values, outstanding, result); });
+			f1.otherwise([p, rejected](const std::exception& ex) {reject(p,rejected,ex); });
+
+			f2.then([p, rejected, values, outstanding](std::tuple<>) { resolve(p, rejected, values, outstanding); });
 			f2.otherwise([p, rejected](const std::exception& ex) {reject(p,rejected,ex); });
 
 			return p.future();
@@ -105,23 +145,24 @@ namespace repro     {
 	private:
 
 		template<class P, class T>
-		static void resolve(P p, std::shared_ptr<bool> rejected, std::shared_ptr<F> value, std::shared_ptr<int> outstanding, T t)
+		static void resolve(P p, std::shared_ptr<bool> rejected, std::shared_ptr<combined_t> values, std::shared_ptr<int> outstanding, T t)
 		{
 			if(*rejected)
 			{
 				return;
 			}
 
-			*value = t;
+			//*value = t;
+			std::get<0>(*values) = t;
 			(*outstanding)--;
 			if (*outstanding == 0)
 			{
-				p.resolve(*value);
+				p.resolve(*values);
 			}
 		}
 
 		template<class P>
-		static void resolve(P p, std::shared_ptr<bool> rejected, std::shared_ptr<F> value, std::shared_ptr<int> outstanding)
+		static void resolve(P p, std::shared_ptr<bool> rejected, std::shared_ptr<combined_t> values, std::shared_ptr<int> outstanding)
 		{
 			if(*rejected)
 			{
@@ -131,7 +172,7 @@ namespace repro     {
 			(*outstanding)--;
 			if (*outstanding == 0)
 			{
-				p.resolve(*value);
+				p.resolve(*values);
 			}
 		}
 
@@ -211,24 +252,24 @@ namespace repro     {
 		}			
 	};
 
-	template<class T, int I = 1, class E = void>
+	template<class T, int I = 1, int O = 0, class E = void>
 	class Assignor;
 
-	template<class T, int I>
-	class Assignor<T, I, typename std::enable_if<(I < std::tuple_size<T>::value)>::type>
+	template<class T, int I, int O>
+	class Assignor<T, I, O, typename std::enable_if<(I>=0 && I < std::tuple_size<T>::value)>::type>
 	{
 	public:
 		template<class ... Args>
 		static void assign(std::shared_ptr<T>& values, std::tuple<Args...>& result)
 		{
-			std::get<I>(*values) = std::get<I - 1>(result);
+			std::get<I>(*values) = std::get<I - 1 + O>(result);
 
-			Assignor<T, I + 1>::assign(values, result);
+			Assignor<T, I + 1, O>::assign(values, result);
 		}
 	};
 
-	template<class T, int I>
-	class Assignor<T, I, typename std::enable_if<!(I<std::tuple_size<T>::value)>::type>
+	template<class T, int I, int O>
+	class Assignor<T, I, O, typename std::enable_if<!(I>=0 && I<std::tuple_size<T>::value)>::type>
 	{
 	public:
 
@@ -317,6 +358,82 @@ namespace repro     {
 		}	
 	};
 
+	template<class T2, class ... Args>
+	class Both<void(std::tuple<T2, Args...>)>
+	{
+	public:
+		typedef std::tuple<T2, Args...> combined_t;
+
+		auto future(Future<> f1, Future<std::tuple<T2, Args...>> f2)
+		{
+			auto p = promise<combined_t>();
+
+			auto values = std::make_shared<combined_t>();
+			auto outstanding = std::make_shared<int>(2);
+			auto rejected = std::make_shared<bool>(false);
+
+			f1.then([p, rejected, values, outstanding]()
+			{
+				resolve(p, rejected, values, outstanding);
+			});
+			f1.otherwise([p, rejected](const std::exception& ex) {reject(p,rejected,ex); });
+
+			f2.then([p, rejected, values, outstanding](std::tuple<T2, Args...> result)
+			{
+				resolve(p, rejected, values, outstanding, result);
+			});
+			f2.otherwise([p, rejected](const std::exception& ex) {reject(p,rejected,ex); });
+
+			return p.future();
+		}
+
+	private:
+
+		template<class P>
+		static void resolve(P p, std::shared_ptr<bool> rejected, std::shared_ptr<combined_t> values,
+			std::shared_ptr<int> outstanding)
+		{
+			if(*rejected)
+			{
+				return;
+			}
+			
+			(*outstanding)--;
+			if (*outstanding == 0)
+			{
+				p.resolve(*values);
+			}
+		}
+
+		static void resolve(Promise<combined_t> p, std::shared_ptr<bool> rejected, std::shared_ptr<combined_t> values,
+			std::shared_ptr<int> outstanding, std::tuple<T2, Args...> result)
+		{
+			if(*rejected)
+			{
+				return;
+			}
+
+			Assignor<combined_t,0,1>::assign(values, result);
+			(*outstanding)--;
+			if (*outstanding == 0)
+			{
+				p.resolve(*values);
+			}
+		}
+
+
+		template<class P>
+		static void reject(P p, std::shared_ptr<bool> rejected, const std::exception& ex)
+		{
+			if(*rejected)
+			{
+				return;
+			}
+
+			*rejected = true;
+			p.reject(ex);
+		}	
+	};
 
 	inline auto both(Future<> f1, Future<> f2)
 	{
@@ -324,6 +441,11 @@ namespace repro     {
 		return b.future(f1, f2);
 	}
 
+	inline auto both(Future<> f1, Future<std::tuple<>> f2)
+	{
+		Both<void()> b;
+		return b.future(f1, f2);
+	}
 
 	template<class T>
 	auto both(Future<> f1, Future<T> f2)
@@ -341,6 +463,14 @@ namespace repro     {
 	}
 
 
+
+	template<class T>
+	auto both(Future<T> f1, Future<std::tuple<>> f2)
+	{
+		Both<void(T)> b;
+		return b.future(f1, f2);
+	}
+
 	template<class T1, class T2>
 	auto both(Future<T1> f1, Future<T2> f2)
 	{
@@ -353,6 +483,13 @@ namespace repro     {
 	auto both(Future<T1> f1, Future<std::tuple<T2, Args...>> f2)
 	{
 		Both<void(T1, std::tuple<T2, Args...>)> b;
+		return b.future(f1, f2);
+	}
+
+	template<class ... Args>
+	auto both(Future<> f1, Future<std::tuple<Args...>> f2)
+	{
+		Both<void(std::tuple<Args...>)> b;
 		return b.future(f1, f2);
 	}
 
