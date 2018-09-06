@@ -294,13 +294,11 @@ public:
 	template<class E>
     void reject(const E& e) const noexcept 
     {
-		std::cout << "wrapping: " << typeid(e).name() << " " << e.what() << std::endl;
         state_->reject(wrap_exception(e));
     }
 
     void reject(std::exception_ptr eptr) const noexcept 
     {
-		std::cout << "wrapping eptr " << std::endl;
 		state_->reject(wrap_exception(eptr));
     }
 
