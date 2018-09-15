@@ -19,36 +19,53 @@ public:
 
     Ex() {}
     Ex(const std::string& m) : msg(m) {}
-    
-    template<class ... Args>
-    Ex(const std::string& m, Args ... args ) 
-    {
-        std::vector<std::string> v {args ...};
-        std::ostringstream oss;
-        oss << m << " ";
-        for ( std::string s : v )
-        {
-            oss << s << " ";
-        }
-        msg = oss.str();
-    }
-    
+
     const char* what() const noexcept 
     { 
         return msg.c_str();
     }
+
+	virtual std::exception_ptr make_exception_ptr() const
+	{
+		return std::make_exception_ptr(*this);
+	}
         
     std::string msg;
 };
 
-class WrappedException : public Ex
+template<class E>
+class ReproEx : public Ex
+{
+public:
+
+    ReproEx() {}
+    ReproEx(const std::string& m) : Ex(m) {}
+
+	virtual std::exception_ptr make_exception_ptr() const
+	{
+		E* e = (E*) this;
+		return std::make_exception_ptr(*e);
+	}
+};
+
+
+class WrappedException : public ReproEx<WrappedException>
 {
 public:
 
 	template<class E>
 	WrappedException(const E& e)
-		: e_(std::make_exception_ptr(e))
-	{}
+	{
+		const Ex* ex = dynamic_cast<const Ex*>(&e);
+		if(ex)
+		{
+			e_ = ex->make_exception_ptr();
+		}
+		else
+		{
+			e_ = std::make_exception_ptr(e);
+		}
+	}
 
 	WrappedException(const std::exception_ptr& e)
 		: e_(e)
@@ -107,6 +124,15 @@ bool isa(const std::exception& ex)
 }
 
 }}
+
+#define MAKE_REPRO_EX(ex) 					\
+class ex : public repro::ReproEx<ex>		\
+{											\
+public:										\
+	ex() {}									\
+	ex(const std::string& s) 				\
+	: repro::ReproEx<ex>(s) {}				\
+};
 
 #endif
 
