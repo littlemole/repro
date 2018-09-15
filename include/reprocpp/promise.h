@@ -196,13 +196,9 @@ public:
 		{
 			cb_(std::forward<VArgs&&>(args)...);
 		}
-		catch (const std::exception& e)
-		{
-			reject(e);
-		}
 		catch (...)
 		{
-			throw;
+			reject(wrap_exception(std::current_exception()));
 		}
 	}
 
