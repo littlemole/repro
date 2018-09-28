@@ -48,7 +48,7 @@ public:
 	}
 };
 
-
+/*
 class WrappedException : public ReproEx<WrappedException>
 {
 public:
@@ -110,7 +110,7 @@ inline WrappedException wrap_exception(std::exception_ptr e)
 {
 	return WrappedException(e);
 }
-
+*/
 namespace ex {
 
 template<class T>

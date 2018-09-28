@@ -105,15 +105,7 @@ public:
 	{
 		promise_->err_ = [e](const std::exception& ex)
 		{
-			const WrappedException* wep = dynamic_cast<const WrappedException*>(&ex);
-			if(wep)
-			{
-				wep->raise(e);
-			}
-			else
-			{
-				e(ex);
-			}
+			e(ex);
 		};
 		return *(Future<Args...>*)(this);
 	}
@@ -196,9 +188,9 @@ public:
 		{
 			cb_(std::forward<VArgs&&>(args)...);
 		}
-		catch (...)
+		catch (const std::exception& ex)
 		{
-			reject(wrap_exception(std::current_exception()));
+			reject(ex);
 		}
 	}
 
@@ -287,17 +279,34 @@ public:
     }
 
     /// reject the future and specify exception
+
+	void reject(const std::exception& e) const noexcept
+	{
+		state_->reject(e);
+	}
+	/*
 	template<class E>
     void reject(const E& e) const noexcept 
     {
-        state_->reject(wrap_exception(e));
+        state_->reject(e);
     }
-
+	*/
     void reject(std::exception_ptr eptr) const noexcept 
     {
-		state_->reject(wrap_exception(eptr));
-    }
-
+		try
+		{
+			std::rethrow_exception(eptr);
+		}
+		catch (const Ex& ex)
+		{
+			state_->reject(ex);
+		}
+		catch (const std::exception& ex)
+		{
+			state_->reject(ex);
+		}
+	}
+	
 protected:
 
     std::shared_ptr<PromiseState<Args...>> state_;

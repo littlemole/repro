@@ -16,6 +16,198 @@ class BasicTest : public ::testing::Test {
 
 }; // end test setup
  
+TEST_F(BasicTest, ThenableThrows) {
+
+	Loop loop;
+	int c = 0;
+	std::type_index t(typeid(std::exception));
+	std::string e;
+
+	loop.task([&c]() {
+		throw Ex("HeloEx");
+		c++;
+		MOL_TEST_PRINT_CNTS();
+	})
+	.then([&c]() {
+		EXPECT_EQ(1, c);
+		c++;
+		MOL_TEST_PRINT_CNTS();
+	})
+	.otherwise([&t,&e](const std::exception& ex) 
+	{
+		t = std::type_index(typeid(ex));
+		e = ex.what();
+	});
+
+	MOL_TEST_PRINT_CNTS();
+	loop.run();
+
+	EXPECT_EQ(0, c);
+	EXPECT_EQ(std::type_index(typeid(Ex)), t);
+	EXPECT_EQ("HeloEx", e);
+	MOL_TEST_ASSERT_CNTS(0, 0);
+}
+
+TEST_F(BasicTest, ThenableChainedThrows) {
+
+	Loop loop;
+	int c = 0;
+	std::type_index t(typeid(std::exception));
+	std::string e;
+
+	loop.task([&c]() {		
+		c++;
+		MOL_TEST_PRINT_CNTS();
+	})
+	.then([&c,&loop]()  
+	{
+		EXPECT_EQ(1, c);
+		c++;
+		MOL_TEST_PRINT_CNTS();
+		return loop.task([&c]() {
+			c++;
+			return c;
+		});
+	})
+	.then([&c](int i) {
+		EXPECT_EQ(c, 3);
+		EXPECT_EQ(i, 3);
+		throw Ex("HeloEx");
+	})
+	.otherwise([&t, &e](const std::exception& ex)
+	{
+		t = std::type_index(typeid(ex));
+		e = ex.what();
+	});
+
+	MOL_TEST_PRINT_CNTS();
+	loop.run();
+
+	EXPECT_EQ(3, c);
+	EXPECT_EQ(std::type_index(typeid(Ex)), t);
+	EXPECT_EQ("HeloEx", e);
+	MOL_TEST_ASSERT_CNTS(0, 0);
+}
+
+
+#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
+
+Future<> thenableThrowsCoro(Loop& loop,std::type_index& t, std::string& e)
+{
+	try
+	{
+		co_await loop.task([]() 
+		{
+			throw Ex("HeloEx");
+		});
+	}
+	catch (const std::exception& ex)
+	{
+		t = std::type_index(typeid(ex));
+		e = ex.what();
+	};
+}
+
+TEST_F(BasicTest, ThenableThrowsCoro) {
+
+	Loop loop;
+	std::type_index t(typeid(std::exception));
+	std::string e;
+
+	thenableThrowsCoro(loop,t, e);
+
+	loop.run();
+
+	EXPECT_EQ(std::type_index(typeid(Ex)), t);
+	EXPECT_EQ("HeloEx", e);
+	MOL_TEST_ASSERT_CNTS(0, 0);
+}
+
+
+Future<> thenableChainedThrowsCoro(Loop& loop, std::type_index& t, std::string& e)
+{
+	try
+	{
+		co_await loop.task([]()
+		{
+		});
+
+		co_await loop.task([]()
+		{
+			throw Ex("HeloEx");
+		});
+	}
+	catch (const std::exception& ex)
+	{
+		t = std::type_index(typeid(ex));
+		e = ex.what();
+	};
+}
+
+
+TEST_F(BasicTest, ThenableChainedThrowsCoro) {
+
+	Loop loop;
+	std::type_index t(typeid(std::exception));
+	std::string e;
+
+	thenableChainedThrowsCoro(loop, t, e);
+
+	MOL_TEST_PRINT_CNTS();
+	loop.run();
+
+	EXPECT_EQ(std::type_index(typeid(Ex)), t);
+	EXPECT_EQ("HeloEx", e);
+	MOL_TEST_ASSERT_CNTS(0, 0);
+}
+
+class TestEx : public std::exception 
+{
+public:
+	char* what()
+	{
+		return "TestEx";
+	}
+};
+
+Future<> thenableChainedThrowsCoroTestEx(Loop& loop, std::type_index& t, std::string& e)
+{
+	try
+	{
+		co_await loop.task([]()
+		{
+		});
+
+		co_await loop.task([]()
+		{
+			throw TestEx();
+		});
+	}
+	catch (const std::exception& ex)
+	{
+		t = std::type_index(typeid(ex));
+		e = ex.what();
+	};
+}
+
+
+TEST_F(BasicTest, ThenableChainedThrowsCoroTestEx) {
+
+	Loop loop;
+	std::type_index t(typeid(std::exception));
+	std::string e;
+
+	thenableChainedThrowsCoroTestEx(loop, t, e);
+
+	MOL_TEST_PRINT_CNTS();
+	loop.run();
+
+	EXPECT_EQ(std::type_index(typeid(std::exception)), t);
+	MOL_TEST_ASSERT_CNTS(0, 0);
+}
+
+
+#endif
 
 TEST_F(BasicTest, Thenable) {
 
