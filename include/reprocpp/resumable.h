@@ -207,6 +207,42 @@ public:
 	}
 };
 
+template<class V>
+auto make_otherwise(V* value)
+{
+	return [value](const std::exception& ex)
+	{
+		const Ex* e = dynamic_cast<const Ex*>(&ex);
+		if(e)
+		{
+			value->set(e->make_exception_ptr());
+		}
+		else
+		{
+			value->set(std::make_exception_ptr(ex));
+		}
+		return true;
+	};
+}
+
+template<class V>
+auto make_resuming_otherwise(V* value,std::experimental::coroutine_handle<> resume_cb)
+{
+	return [value,resume_cb](const std::exception& ex)
+	{
+		const Ex* e = dynamic_cast<const Ex*>(&ex);
+		if(e)
+		{
+			value->set(e->make_exception_ptr());
+		}
+		else
+		{
+			value->set(std::make_exception_ptr(ex));
+		}
+		resume_cb.resume();
+		return true;
+	};
+}
 
 template<class T>
 class Future<T> : public FutureMixin<T>
@@ -225,26 +261,7 @@ public:
 				value_.set(std::move(t));
 			};
 
-			this->promise_->err_ = [this](const std::exception& ex)
-			{
-				const Ex* e = dynamic_cast<const Ex*>(&ex);
-				if(e)
-				{
-					value_.set(e->make_exception_ptr());
-				}
-				else
-				{
-					try
-					{
-						throw ex;
-					}
-					catch (...)
-					{
-						value_.set(std::current_exception());
-					}
-				}
-				return true;
-			};
+			this->promise_->err_ = make_otherwise(&value_);			
 		}
 	}
 
@@ -284,28 +301,7 @@ public:
 			resume_cb.resume();
 		});
 
-		this->promise_->err_ = [resume_cb, this](const std::exception& ex)
-		{
-			const Ex* e = dynamic_cast<const Ex*>(&ex);
-			if (e)
-			{
-				value_.set(e->make_exception_ptr());
-			}
-			else
-			{
-				try
-				{
-					throw ex;
-				}
-				catch (...)
-				{
-					value_.set(std::current_exception());
-				}
-			}
-
-			resume_cb.resume();
-			return true;
-		};
+		this->promise_->err_ = make_resuming_otherwise(&value_,resume_cb);
 	}
 
 private:
@@ -330,26 +326,7 @@ public:
 				value_.set(t);
 			};
 
-			this->promise_->err_ = [this](const std::exception& ex)
-			{
-				const Ex* e = dynamic_cast<const Ex*>(&ex);
-				if (e)
-				{
-					value_.set(e->make_exception_ptr());
-				}
-				else
-				{
-					try
-					{
-						throw ex;
-					}
-					catch (...)
-					{
-						value_.set(std::current_exception());
-					}
-				}
-				return true;
-			};
+			this->promise_->err_ = make_otherwise(&value_);
 		}
 	}
 
@@ -389,27 +366,7 @@ public:
 			resume_cb.resume();
 		});
 
-		this->promise_->err_ = [resume_cb, this](const std::exception& ex)
-		{
-			const Ex* e = dynamic_cast<const Ex*>(&ex);
-			if (e)
-			{
-				value_.set(e->make_exception_ptr());
-			}
-			else
-			{
-				try
-				{
-					throw ex;
-				}
-				catch (...)
-				{
-					value_.set(std::current_exception());
-				}
-			}
-			resume_cb.resume();
-			return true;
-		};
+		this->promise_->err_ = make_resuming_otherwise(&value_,resume_cb);
 	}
 
 private:
@@ -435,28 +392,7 @@ public:
 				value_.set();
 			};
 
-			this->promise_->err_ = [this](const std::exception& ex)
-			{
-				std::cout << "Future<> default err handler" << std::endl;
-
-				const Ex* e = dynamic_cast<const Ex*>(&ex);
-				if (e)
-				{
-					value_.set(e->make_exception_ptr());
-				}
-				else
-				{
-					try
-					{
-						throw ex;
-					}
-					catch (...)
-					{
-						value_.set(std::current_exception());
-					}
-				}
-				return true;
-			};
+			this->promise_->err_ = make_otherwise(&value_);
 		}
 	}
 
@@ -493,27 +429,7 @@ public:
 			resume_cb.resume();
 		});
 
-		this->promise_->err_ = [resume_cb, this](const std::exception& ex)
-		{
-			const Ex* e = dynamic_cast<const Ex*>(&ex);
-			if (e)
-			{
-				value_.set(e->make_exception_ptr());
-			}
-			else
-			{
-				try
-				{
-					throw ex;
-				}
-				catch (...)
-				{
-					value_.set(std::current_exception());
-				}
-			}
-			resume_cb.resume();
-			return true;
-		};
+		this->promise_->err_ = make_resuming_otherwise(&value_,resume_cb);
 	}
 
 private:
