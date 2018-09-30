@@ -243,6 +243,7 @@ public:
 						value_.set(std::current_exception());
 					}
 				}
+				return true;
 			};
 		}
 	}
@@ -303,6 +304,7 @@ public:
 			}
 
 			resume_cb.resume();
+			return true;
 		};
 	}
 
@@ -346,6 +348,7 @@ public:
 						value_.set(std::current_exception());
 					}
 				}
+				return true;
 			};
 		}
 	}
@@ -405,6 +408,7 @@ public:
 				}
 			}
 			resume_cb.resume();
+			return true;
 		};
 	}
 
@@ -433,6 +437,8 @@ public:
 
 			this->promise_->err_ = [this](const std::exception& ex)
 			{
+				std::cout << "Future<> default err handler" << std::endl;
+
 				const Ex* e = dynamic_cast<const Ex*>(&ex);
 				if (e)
 				{
@@ -449,6 +455,7 @@ public:
 						value_.set(std::current_exception());
 					}
 				}
+				return true;
 			};
 		}
 	}
@@ -505,6 +512,7 @@ public:
 				}
 			}
 			resume_cb.resume();
+			return true;
 		};
 	}
 

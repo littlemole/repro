@@ -57,7 +57,8 @@ update-dockerfile:
 
 clean-image: update-dockerfile
 	docker build -t $(IMAGE) . --no-cache -fDockerfile --build-arg CXX=$(CXX) --build-arg BUILDCHAIN=$(BUILDCHAIN)
-		                                        
+
+run:		                                        
 	docker run --name $(CONTAINER) --security-opt seccomp=unconfined  -ti  $(IMAGE) bash
 
 stop: 

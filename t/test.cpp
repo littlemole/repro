@@ -15,6 +15,122 @@ class BasicTest : public ::testing::Test {
 
 
 }; // end test setup
+
+ 
+TEST_F(BasicTest, ThenableNewThrows) {
+
+	Loop loop;
+	int c = 0;
+	std::type_index t(typeid(std::exception));
+	std::string e;
+
+	loop.task([&c]() {
+		throw Ex("HeloEx");
+		c++;
+		MOL_TEST_PRINT_CNTS();
+	})
+	.then([&c]() {
+		EXPECT_EQ(1, c);
+		c++;
+		MOL_TEST_PRINT_CNTS();
+	})
+	.otherwise([&t,&e](const Ex& ex) 
+	{
+		t = std::type_index(typeid(ex));
+		e = ex.what();
+	})
+	.otherwise([](const std::exception& ex) 
+	{
+		// fail
+	});
+
+	MOL_TEST_PRINT_CNTS();
+	loop.run();
+
+	EXPECT_EQ(0, c);
+	EXPECT_EQ(std::type_index(typeid(Ex)), t);
+	EXPECT_EQ("HeloEx", e);
+	MOL_TEST_ASSERT_CNTS(0, 0);
+}
+
+ 
+TEST_F(BasicTest, ThenableNewThrowsStdEx) {
+
+	Loop loop;
+	int c = 0;
+	std::type_index t(typeid(std::exception));
+	std::string e;
+
+	loop.task([&c]() {
+		throw std::exception();
+		c++;
+		MOL_TEST_PRINT_CNTS();
+	})
+	.then([&c]() {
+		EXPECT_EQ(1, c);
+		c++;
+		MOL_TEST_PRINT_CNTS();
+	})
+	.otherwise([](const Ex& ex) 
+	{
+		// not called
+	})
+	.otherwise([&t,&e](const std::exception& ex) 
+	{
+		t = std::type_index(typeid(ex));
+		e = "std::ex";
+	});
+
+	MOL_TEST_PRINT_CNTS();
+	loop.run();
+
+	EXPECT_EQ(0, c);
+	EXPECT_EQ(std::type_index(typeid(std::exception)), t);
+	EXPECT_EQ("std::ex", e);
+	MOL_TEST_ASSERT_CNTS(0, 0);
+}
+
+class SomeEx : public std::exception {};
+
+TEST_F(BasicTest, ThenableNewThrowsSomeEx) {
+
+	Loop loop;
+	int c = 0;
+	std::type_index t(typeid(std::exception));
+	std::string e;
+
+	loop.task([&c]() {
+		throw SomeEx();
+		c++;
+		MOL_TEST_PRINT_CNTS();
+	})
+	.then([&c]() {
+		EXPECT_EQ(1, c);
+		c++;
+		MOL_TEST_PRINT_CNTS();
+	})
+	.otherwise([](const Ex& ex) 
+	{
+		// not called
+	})
+	.otherwise([&t,&e](const SomeEx& ex) 
+	{
+		t = std::type_index(typeid(ex));
+		e = "somex";
+	})
+	.otherwise([](const std::exception& ex) 
+	{
+		// not called
+	});
+
+	MOL_TEST_PRINT_CNTS();
+	loop.run();
+
+	EXPECT_EQ(0, c);
+	EXPECT_EQ(std::type_index(typeid(SomeEx)), t);
+	EXPECT_EQ("somex", e);
+	MOL_TEST_ASSERT_CNTS(0, 0);
+}
  
 TEST_F(BasicTest, ThenableThrows) {
 
@@ -164,7 +280,7 @@ TEST_F(BasicTest, ThenableChainedThrowsCoro) {
 class TestEx : public std::exception 
 {
 public:
-	char* what()
+	const char* what() const noexcept
 	{
 		return "TestEx";
 	}
@@ -750,6 +866,8 @@ Future<> coro_test(Loop& loop, int& result)
 	});
 
 	std::cout << "leave coro_test" << std::endl;
+
+	co_return;
 }
 
 TEST_F(BasicTest, SimpleCoroutine)
@@ -795,6 +913,8 @@ Future<> coro_test_throw(Loop& loop, int& result)
 	});
 
 	std::cout << "leave coro_test" << std::endl;
+
+	co_return;
 }
 
 Future<> coro_test_late_throw(Loop& loop, int& result)
@@ -815,6 +935,8 @@ Future<> coro_test_late_throw(Loop& loop, int& result)
 	});
 
 	std::cout << "leave coro_test" << std::endl;
+
+	co_return;
 }
 
 Future<> coro_test_trampoline(Loop& loop, int& result)
@@ -830,6 +952,8 @@ Future<> coro_test_trampoline(Loop& loop, int& result)
 		std::cout << "ex::" << ex.what() << std::endl;
 	}
 	std::cout << "leave coro_test_trampoline" << std::endl;
+
+	co_return;
 }
 
 TEST_F(BasicTest, SimpleCoroutineWithThrow)
@@ -883,12 +1007,21 @@ Future<> coro_test_plain_trampoline(Loop& loop, int& result)
 	{
 		co_await coro_test_plain_throw(loop, result);
 	}
-	catch (const std::exception& ex)
+	
+	catch (const Ex& ex)
 	{
 		result++;
 		std::cout << "ex::" << ex.what() << std::endl;
+	}	
+	
+	catch (const std::exception& ex)
+	{
+		//result++;
+		//std::cout << "ex::" << ex.what() << std::endl;
 	}
 	std::cout << "leave coro_test_trampoline" << std::endl;
+
+	co_return;
 }
 
 TEST_F(BasicTest, PlainOldCoroutineImpleWithThrow)
@@ -921,7 +1054,11 @@ Future<> coro_test_plain_InsideOut_trampoline(Loop& loop, int& result)
 
 	coro_test_late_throw(loop, result)
 	.then([p]() { p.resolve(); })
-	.otherwise([p](const std::exception& ex) { p.reject(ex);});
+	.otherwise([p](const std::exception& ex) 
+	{
+		 std::cout << "inside err handler: " << typeid(ex).name() << " " << ex.what() << std::endl;
+		 p.reject(ex);
+	});
 
 	std::cout << "leave coro_test_trampoline" << std::endl;
 
@@ -1099,7 +1236,7 @@ TEST_F(BasicTest, PromiseMonadLaw1LeftIdentity) {
 		});
 
 		// a function f return decltype(value)
-		auto f = [&loop](int x)
+		auto f = [](int x)
 		{
 			return x * 2;
 		};

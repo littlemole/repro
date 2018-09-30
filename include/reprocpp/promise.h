@@ -48,6 +48,24 @@ struct ReturnsVoid
 	static const bool value = std::is_void<ResultType>::value;
 };
 
+// first argument helper courtesy https://stackoverflow.com/a/35348334
+
+template<typename Ret, typename Arg, typename... Rest>
+Arg first_argument_helper(Ret(*) (Arg, Rest...));
+
+template<typename Ret, typename F, typename Arg, typename... Rest>
+Arg first_argument_helper(Ret(F::*) (Arg, Rest...));
+
+template<typename Ret, typename F, typename Arg, typename... Rest>
+Arg first_argument_helper(Ret(F::*) (Arg, Rest...) const);
+
+template <typename F>
+decltype(first_argument_helper(&F::operator())) first_argument_helper(F);
+
+template <typename T>
+using first_argument = decltype(first_argument_helper(std::declval<T>()));
+
+
 
 template<class ... Args>
 class FutureMixin
@@ -70,6 +88,14 @@ public:
 	template<class F, typename std::enable_if<ReturnsVoid<F, Args...>::value>::type* = nullptr>
 	Future<Args...>& then(F f) noexcept
 	{
+#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
+		// if this was a coroutine produced promise, it will
+		// have default handler that needs reset IF
+		// you attach a then/otherwise chain manually.
+		// this allows mixing of coroutine and then/otherwise
+		// style of handling promises
+		promise_->err_ = [](const std::exception&){ return false; };
+#endif		
 		promise_->cb_ = f;
 		return *(Future<Args...>*)(this);
 	}
@@ -88,6 +114,7 @@ public:
 		promise_->err_ = [p](const std::exception& e)
 		{
 			p.reject(e);
+			return true;
 		};
 
 		promise_->cb_ = [f, p](Args ... args)
@@ -103,17 +130,39 @@ public:
 	template<class E>
 	Future<Args...>& otherwise(E e) noexcept
 	{
-		promise_->err_ = [e](const std::exception& ex)
-		{
-			e(ex);
-		};
+		std::function<void(first_argument<E>)> f = e;
+
+        otherwise_impl(f);
+
 		return *(Future<Args...>*)(this);
 	}
-
 
 protected:
 
 	PromiseState<Args...>* promise_;
+
+	template<class E>
+    void otherwise_impl(std::function<void(const E&)> fun)  noexcept 
+    {
+        std::function<bool(const std::exception& ex)> chain = promise_->err_;
+
+		promise_->err_ = [chain,fun](const std::exception& e)
+		{
+			if(chain && chain(e))
+			{
+				return true;
+			}
+			
+			const E* ex = dynamic_cast<const E*>(&e);
+			if(ex)
+			{
+				fun(*ex);
+				return true;
+			}
+
+			return false;
+		};
+    }			
 };
 
 
@@ -162,7 +211,7 @@ public:
 
 		cb_ = [](Args...) {};
 		err_ = [](const std::exception& ex) {
-			throw;
+			return false;
 		};
 	}
 
@@ -219,7 +268,11 @@ public:
 
 		try
 		{
-			err_(e);
+			bool handled = err_(e);
+			if(!handled)
+			{
+				throw e;
+			}
 		}
 		catch (...)
 		{
@@ -230,7 +283,7 @@ public:
 protected:
 
 	std::function<void(Args ...)> cb_;
-	std::function<void(const std::exception&)> err_;
+	std::function<bool(const std::exception&)> err_;
 
 	PromiseState(const PromiseState<Args ...>& rhs) = delete;
 	PromiseState(PromiseState<Args ...>&& rhs) = delete;
@@ -284,13 +337,7 @@ public:
 	{
 		state_->reject(e);
 	}
-	/*
-	template<class E>
-    void reject(const E& e) const noexcept 
-    {
-        state_->reject(e);
-    }
-	*/
+
     void reject(std::exception_ptr eptr) const noexcept 
     {
 		try
