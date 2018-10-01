@@ -90,7 +90,7 @@ public:
 	{
 #ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
 		// if this was a coroutine produced promise, it will
-		// have default handler that needs reset IF
+		// have default error handler that needs reset IF
 		// you attach a then/otherwise chain manually.
 		// this allows mixing of coroutine and then/otherwise
 		// style of handling promises

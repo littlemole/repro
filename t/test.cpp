@@ -208,6 +208,39 @@ TEST_F(BasicTest, ThenableChainedThrows) {
 
 #ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
 
+class MyEx : public ReproEx<MyEx> {};
+
+Future<> thenableThrowsCoroMyEx(Loop& loop,std::type_index& t, std::string& e)
+{
+	try
+	{
+		co_await loop.task([]() 
+		{
+			throw MyEx();
+		});
+	}
+	catch (const std::exception& ex)
+	{
+		t = std::type_index(typeid(ex));
+		e = "myex";
+	};
+}
+
+TEST_F(BasicTest, ThenableThrowsCoroMyEx) {
+
+	Loop loop;
+	std::type_index t(typeid(std::exception));
+	std::string e;
+
+	thenableThrowsCoroMyEx(loop,t, e);
+
+	loop.run();
+
+	EXPECT_EQ(std::type_index(typeid(MyEx)), t);
+	EXPECT_EQ("myex", e);
+	MOL_TEST_ASSERT_CNTS(0, 0);
+}
+
 Future<> thenableThrowsCoro(Loop& loop,std::type_index& t, std::string& e)
 {
 	try
