@@ -418,10 +418,7 @@ Future<Args...> future( T cb )
 	catch(...)
 	{
 		auto ex = std::current_exception();
-		nextTick([p,ex]()
-		{
-			p.reject(ex);
-		});
+		p.reject(ex);
 	}
 
     return p.future();
