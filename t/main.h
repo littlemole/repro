@@ -48,9 +48,9 @@ Task* taskimpl_void(P p,F f)
 		{
 			f();
 		}
-		catch (const std::exception& ex)
+		catch (...)
 		{
-			p.reject(ex);
+			p.reject(std::current_exception());
 			return;
 		}
 		p.resolve();
@@ -66,9 +66,9 @@ Task* taskimpl_r(P p,F f)
 		{
 			p.resolve(f());
 		}
-		catch (const std::exception& ex)
+		catch (...)
 		{
-			p.reject(ex);
+			p.reject(std::current_exception());
 		}
 	});
 }

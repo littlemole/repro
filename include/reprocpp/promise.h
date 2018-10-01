@@ -70,6 +70,7 @@ using first_argument = decltype(first_argument_helper(std::declval<T>()));
 template<class ... Args>
 class FutureMixin
 {
+friend PromiseState<Args...>;
 public:
 
 	typedef Promise<Args ...> PromiseType;
@@ -94,7 +95,7 @@ public:
 		// you attach a then/otherwise chain manually.
 		// this allows mixing of coroutine and then/otherwise
 		// style of handling promises
-		promise_->err_ = [](const std::exception&){ return false; };
+		promise_->err_ = [](std::exception_ptr){ return false; };
 #endif		
 		promise_->cb_ = f;
 		return *(Future<Args...>*)(this);
@@ -111,7 +112,7 @@ public:
 
 		auto p = PromiseType::create();
 
-		promise_->err_ = [p](const std::exception& e)
+		promise_->err_ = [p](std::exception_ptr e)
 		{
 			p.reject(e);
 			return true;
@@ -144,22 +145,34 @@ protected:
 	template<class E>
     void otherwise_impl(std::function<void(const E&)> fun)  noexcept 
     {
-        std::function<bool(const std::exception& ex)> chain = promise_->err_;
+        std::function<bool(std::exception_ptr)> chain = promise_->err_;
 
-		promise_->err_ = [chain,fun](const std::exception& e)
+		promise_->err_ = [chain,fun](std::exception_ptr eptr)
 		{
-			if(chain && chain(e))
+			std::cout << "chain enter " << std::endl;
+			if(chain && chain(eptr))
 			{
 				return true;
+			}
+
+			try
+			{
+				std::rethrow_exception(eptr);
+			}
+			catch(const std::exception& e)
+			{
+				std::cout << "trying " << typeid(e).name() << " for " << typeid(E).name() << std::endl;
+				const E* ex = dynamic_cast<const E*>(&e);
+				std::cout << " with  " << (bool)ex  << std::endl;
+				if(ex)
+				{
+					std::cout << "gotcha " << std::endl;
+					fun(*ex);
+					return true;
+				}
 			}
 			
-			const E* ex = dynamic_cast<const E*>(&e);
-			if(ex)
-			{
-				fun(*ex);
-				return true;
-			}
-
+			std::cout << "nope " << std::endl;
 			return false;
 		};
     }			
@@ -210,7 +223,7 @@ public:
 		LITTLE_MOLE_ADDREF_DEBUG_REF_CNT(promises);
 
 		cb_ = [](Args...) {};
-		err_ = [](const std::exception& ex) {
+		err_ = [](std::exception_ptr ex) {
 			return false;
 		};
 	}
@@ -237,9 +250,9 @@ public:
 		{
 			cb_(std::forward<VArgs&&>(args)...);
 		}
-		catch (const std::exception& ex)
+		catch (...)
 		{
-			reject(ex);
+			reject(std::current_exception());
 		}
 	}
 
@@ -252,13 +265,14 @@ public:
 			ptr->resolve(args...);
 		});
 
-		f.otherwise([ptr](const std::exception& e)
+		f.promise_->err_ = [ptr](std::exception_ptr eptr)
 		{
-			ptr->reject(e);
-		});
+			ptr->reject(eptr);
+			return true;
+		};
 	}
 
-	void reject(const std::exception& e)
+	void reject(std::exception_ptr eptr)
 	{
 		// stabilize ref count so we have 
 		// a valid this pointer until end of
@@ -268,10 +282,10 @@ public:
 
 		try
 		{
-			bool handled = err_(e);
+			bool handled = err_(eptr);
 			if(!handled)
 			{
-				throw e;
+				std::rethrow_exception(eptr);
 			}
 		}
 		catch (...)
@@ -283,7 +297,7 @@ public:
 protected:
 
 	std::function<void(Args ...)> cb_;
-	std::function<bool(const std::exception&)> err_;
+	std::function<bool(std::exception_ptr)> err_;
 
 	PromiseState(const PromiseState<Args ...>& rhs) = delete;
 	PromiseState(PromiseState<Args ...>&& rhs) = delete;
@@ -333,25 +347,15 @@ public:
 
     /// reject the future and specify exception
 
-	void reject(const std::exception& e) const noexcept
+	template<class E>
+	void reject(const E& e) const noexcept
 	{
-		state_->reject(e);
+		state_->reject(std::make_exception_ptr(e));
 	}
 
     void reject(std::exception_ptr eptr) const noexcept 
     {
-		try
-		{
-			std::rethrow_exception(eptr);
-		}
-		catch (const Ex& ex)
-		{
-			state_->reject(ex);
-		}
-		catch (const std::exception& ex)
-		{
-			state_->reject(ex);
-		}
+		state_->reject(eptr);
 	}
 	
 protected:

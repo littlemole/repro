@@ -351,7 +351,8 @@ TEST_F(BasicTest, ThenableChainedThrowsCoroTestEx) {
 	MOL_TEST_PRINT_CNTS();
 	loop.run();
 
-	EXPECT_EQ(std::type_index(typeid(std::exception)), t);
+	EXPECT_EQ(std::type_index(typeid(TestEx)), t);
+	EXPECT_EQ("TestEx", e);
 	MOL_TEST_ASSERT_CNTS(0, 0);
 }
 

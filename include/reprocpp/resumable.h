@@ -210,17 +210,9 @@ public:
 template<class V>
 auto make_otherwise(V* value)
 {
-	return [value](const std::exception& ex)
+	return [value](std::exception_ptr ex)
 	{
-		const Ex* e = dynamic_cast<const Ex*>(&ex);
-		if(e)
-		{
-			value->set(e->make_exception_ptr());
-		}
-		else
-		{
-			value->set(std::make_exception_ptr(ex));
-		}
+		value->set(ex);
 		return true;
 	};
 }
@@ -228,17 +220,9 @@ auto make_otherwise(V* value)
 template<class V>
 auto make_resuming_otherwise(V* value,std::experimental::coroutine_handle<> resume_cb)
 {
-	return [value,resume_cb](const std::exception& ex)
+	return [value,resume_cb](std::exception_ptr ex)
 	{
-		const Ex* e = dynamic_cast<const Ex*>(&ex);
-		if(e)
-		{
-			value->set(e->make_exception_ptr());
-		}
-		else
-		{
-			value->set(std::make_exception_ptr(ex));
-		}
+		value->set(ex);
 		resume_cb.resume();
 		return true;
 	};
