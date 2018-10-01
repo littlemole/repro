@@ -350,7 +350,15 @@ public:
 	template<class E>
 	void reject(const E& e) const noexcept
 	{
-		state_->reject(std::make_exception_ptr(e));
+		const Ex* ex = dynamic_cast<const Ex*>(&e);
+		if(ex)
+		{
+			state_->reject(ex->make_exception_ptr());
+		}
+		else
+		{
+			state_->reject(std::make_exception_ptr(e));
+		}
 	}
 
     void reject(std::exception_ptr eptr) const noexcept 
