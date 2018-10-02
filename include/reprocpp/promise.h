@@ -149,7 +149,6 @@ protected:
 
 		promise_->err_ = [chain,fun](std::exception_ptr eptr)
 		{
-			std::cout << "chain enter " << std::endl;
 			if(chain && chain(eptr))
 			{
 				return true;
@@ -161,18 +160,14 @@ protected:
 			}
 			catch(const std::exception& e)
 			{
-				std::cout << "trying " << typeid(e).name() << " for " << typeid(E).name() << std::endl;
 				const E* ex = dynamic_cast<const E*>(&e);
-				std::cout << " with  " << (bool)ex  << std::endl;
 				if(ex)
 				{
-					std::cout << "gotcha " << std::endl;
 					fun(*ex);
 					return true;
 				}
 			}
 			
-			std::cout << "nope " << std::endl;
 			return false;
 		};
     }			
