@@ -404,11 +404,6 @@ public:
 		return ptr_;
 	}
 
-	Ptr get() const
-	{
-		return ptr_;
-	}
-
 	PromiseStateHolder( PromiseStateHolder&& rhs)
 	{
 		if(this == &rhs) return;
