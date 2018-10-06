@@ -201,22 +201,6 @@ public:
     }
 };
 
-#define MOL_PROMISE_USE_MEMPOOL
-#ifdef MOL_PROMISE_USE_MEMPOOL
-
-template<size_t S>
-class MemPool;
-
-
-template<size_t S>
-MemPool<S>& mempool()
-{
-	static MemPool<S> mem;
-	return mem;
-};
-
-#endif
-
 
 template<class ... Args>
 class PromiseState : public std::enable_shared_from_this<PromiseState<Args...>>
@@ -305,20 +289,6 @@ public:
 		}
 	}
 
-#ifdef MOL_PROMISE_USE_MEMPOOL
-
-	void* operator new(size_t s)
-	{
-		return mempool<sizeof(PromiseState<Args...>)>().alloc();  
-	}
-	
-	void operator delete(void* p)
-	{
-		return mempool<sizeof(PromiseState<Args...>)>().free(p);
-	}
-
-#endif
-
 protected:
 
 	std::function<void(Args ...)> cb_;
@@ -330,51 +300,6 @@ protected:
 	PromiseState& operator=(const PromiseState<Args ...>& rhs) = delete;
 };
 
-#ifdef MOL_PROMISE_USE_MEMPOOL
-
-template<size_t S>
-class MemPool
-{
-public:
-	static constexpr size_t size = S;
-
-	struct Node
-	{
-		Node(): next(nullptr) {}
-
-		Node* next;
-	};
-
-	MemPool()
-	{}
-
-	void* alloc()
-	{
-		if ( freestore_.next == nullptr)
-		{
-			void * n = std::malloc(size);
-			return n; 
-		}
-
-		Node* p = freestore_.next;		
-		freestore_.next = p->next;
-		return p;
-	}
-
-	void free(void* v)
-	{
-		Node* oldhead = freestore_.next;
-		Node* newhead = (Node*) v;
-		newhead->next = oldhead;
-		freestore_ .next = newhead;
-	}
-
-private:
-
-  Node freestore_;
-};
-
-#endif
 
 template<class ... Args>
 class PromiseMixin
@@ -382,7 +307,7 @@ class PromiseMixin
 public:
 
 	PromiseMixin() noexcept
-    : state_( new PromiseState<Args...>() )
+    : state_( std::make_shared<PromiseState<Args...>>() )
     {
     }
 
