@@ -65,7 +65,7 @@ decltype(first_argument_helper(&F::operator())) first_argument_helper(F);
 template <typename T>
 using first_argument = decltype(first_argument_helper(std::declval<T>()));
 
-// common Future code shared with coro impl
+
 
 template<class ... Args>
 class FutureMixin
@@ -89,8 +89,6 @@ public:
 	template<class F, typename std::enable_if<ReturnsVoid<F, Args...>::value>::type* = nullptr>
 	Future<Args...>& then(F f) noexcept
 	{
-		promise_->cb_ = f; 
-		
 #ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
 		// if this was a coroutine produced promise, it will
 		// have default error handler that needs reset IF
@@ -99,6 +97,7 @@ public:
 		// style of handling promises
 		promise_->err_ = [](std::exception_ptr){ return false; };
 #endif		
+		promise_->cb_ = f;
 		return *(Future<Args...>*)(this);
 	}
 
@@ -202,28 +201,9 @@ public:
     }
 };
 
-// Promise Memory Pool
-
-template<size_t S>
-class MemPool;
-
-
-template<size_t S>
-MemPool<S>& mempool()
-{
-	static MemPool<S> mem;
-	return mem;
-};
-
-// Promise refcounted ptr
 
 template<class ... Args>
-class PromiseStateHolder;
-
-// Promise shared state impl
-
-template<class ... Args>
-class PromiseState 
+class PromiseState : public std::enable_shared_from_this<PromiseState<Args...>>
 {
 	friend class Future<Args...>;
 	friend class FutureMixin<Args...>;
@@ -231,7 +211,7 @@ class PromiseState
 
 public:
 
-	typedef PromiseState<Args ...>* Ptr;
+	typedef std::shared_ptr<PromiseState<Args ...>> Ptr;
 
 	PromiseState()
 	{
@@ -259,7 +239,7 @@ public:
 		// stabilize ref count so we have 
 		// a valid this pointer until end of
 		// method
-		Ptr ptr = this->addref();//shared_from_this();
+		Ptr ptr = this->shared_from_this();
 
 		try
 		{
@@ -269,26 +249,20 @@ public:
 		{
 			reject(std::current_exception());
 		}
-
-		ptr->release();
 	}
 
 	void resolve(Future<Args...>& f) noexcept
 	{
-		Ptr ptr = this->addref();//shared_from_this();
+		Ptr ptr = this->shared_from_this();
 
-		PromiseStateHolder<Args...> holder(ptr);
-
-		f.then([holder](Args ... args)
+		f.then([ptr](Args ... args)
 		{
-			holder->resolve(args...);
-			//holder.ptr->release();
+			ptr->resolve(args...);
 		});
 
-		f.promise_->err_ = [holder](std::exception_ptr eptr)
+		f.promise_->err_ = [ptr](std::exception_ptr eptr)
 		{
-			holder->reject(eptr);
-			//holder.ptr->release();
+			ptr->reject(eptr);
 			return true;
 		};
 	}
@@ -299,7 +273,7 @@ public:
 		// a valid this pointer until end of
 		// method
 
-		Ptr ptr = this->addref();//shared_from_this();
+		Ptr ptr = this->shared_from_this();
 
 		try
 		{
@@ -311,35 +285,7 @@ public:
 		}
 		catch (...)
 		{
-			ptr->release();
 			throw;
-		}
-
-		ptr->release();
-	}
-
-	void* operator new(size_t s)
-	{
-		return mempool<sizeof(PromiseState<Args...>)>().alloc();  
-	}
-	
-	void operator delete(void* p)
-	{
-		return mempool<sizeof(PromiseState<Args...>)>().free(p);
-	}
-
-	Ptr addref()
-	{
-		refcount_++;
-		return this;
-	}
-
-	void release()
-	{
-		refcount_--;
-		if(refcount_==0)
-		{
-			delete this;
 		}
 	}
 
@@ -352,129 +298,6 @@ protected:
 	PromiseState(PromiseState<Args ...>&& rhs) = delete;
 	PromiseState& operator=(PromiseState<Args ...>&& rhs) = delete;
 	PromiseState& operator=(const PromiseState<Args ...>& rhs) = delete;
-
-	long refcount_ = 1;
-};
-
-template<class ... Args>
-class PromiseStateHolder 
-{
-public:
-
-	typedef PromiseState<Args ...>* Ptr;
-
-private:
-
-	Ptr ptr_ = nullptr;
-
-public:
-
-	PromiseStateHolder( Ptr p) : ptr_(p) {}
-
-	~PromiseStateHolder()
-	{
-		if(ptr_)
-		{
-			ptr_->release();
-			ptr_ = nullptr;
-		}
-	}
-
-	PromiseStateHolder( const PromiseStateHolder& rhs)
-	{
-		if(this == &rhs) return;
-		ptr_ = rhs->addref();
-	}
-
-	PromiseStateHolder& operator=( const PromiseStateHolder& rhs)
-	{
-		if(this == &rhs) return *this;
-
-		if(ptr_)
-		{
-			ptr_->release();
-			ptr_ = nullptr;
-		}
-
-		ptr_ = rhs->addref();
-		return *this;
-	}
-
-	Ptr operator->() const
-	{
-		return ptr_;
-	}
-
-	Ptr get() const
-	{
-		return ptr_;
-	}
-
-	PromiseStateHolder( PromiseStateHolder&& rhs)
-	{
-		if(this == &rhs) return;
-
-		ptr_ = rhs.ptr_;
-		rhs.ptr_ = nullptr;
-	}
-
-	PromiseStateHolder& operator=(PromiseStateHolder&& rhs)
-	{
-		if(this == &rhs) return *this;
-
-		if(ptr_)
-		{
-			ptr_->release();
-			ptr_ = nullptr;
-		}
-
-		ptr_ = rhs.ptr_;
-		rhs.ptr_ = nullptr;
-		return *this;
-	}
-};
-
-
-template<size_t S>
-class MemPool
-{
-public:
-	static constexpr size_t size = S;
-
-	struct Node
-	{
-		Node(): next(nullptr) {}
-
-		Node* next;
-	};
-
-	MemPool()
-	{}
-
-	void* alloc()
-	{
-		if ( freestore_.next == nullptr)
-		{
-			void * n = std::malloc(size);
-			return n; 
-		}
-
-		Node* p = freestore_.next;		
-		freestore_.next = p->next;
-		return p;
-	}
-
-	void free(void* v)
-	{
-		Node* oldhead = freestore_.next;
-		Node* newhead = (Node*) v;
-		newhead->next = oldhead;
-		freestore_ .next = newhead;
-	}
-
-private:
-
-  Node freestore_;
 };
 
 
@@ -484,7 +307,7 @@ class PromiseMixin
 public:
 
 	PromiseMixin() noexcept
-    : state_( new PromiseState<Args...>() )
+    : state_( std::make_shared<PromiseState<Args...>>() )
     {
     }
 
@@ -492,6 +315,7 @@ public:
 	{
 		return Promise<Args...>();
 	}
+
 
     /// return the future
     Future<Args...> future() const noexcept 
@@ -517,6 +341,7 @@ public:
     }
 
     /// reject the future and specify exception
+
 	template<class E>
 	void reject(const E& e) const noexcept
 	{
@@ -538,7 +363,7 @@ public:
 	
 protected:
 
-	PromiseStateHolder<Args...> state_;
+    std::shared_ptr<PromiseState<Args...>> state_;
 };
 
 /**

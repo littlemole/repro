@@ -137,7 +137,7 @@ public:
 
 	Future<Args...> get_return_object()
 	{
-		return Future<Args...>(*(this->state_.get()), true);
+		return Future<Args...>(*(this->state_), true);
 	}
 
 	auto initial_suspend() const
