@@ -210,6 +210,26 @@ TEST_F(BasicTest, ThenableChainedThrows) {
 
 class MyEx : public ReproEx<MyEx> {};
 
+Future<> coroReturnNoAsync(Loop& loop,std::string& e)
+{
+	e = "test";
+	co_return;
+}
+
+TEST_F(BasicTest, CoroReturnNoAsync) {
+
+	Loop loop;
+	std::string e;
+
+	coroReturnNoAsync(loop, e);
+
+	loop.run();
+
+	EXPECT_EQ("test", e);
+	MOL_TEST_ASSERT_CNTS(0, 0);
+}
+
+
 Future<> thenableThrowsCoroMyEx(Loop& loop,std::type_index& t, std::string& e)
 {
 	try
