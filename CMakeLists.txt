@@ -123,6 +123,7 @@ add_test(NAME AfterTest COMMAND after_test)
 # install rules
 ############################################
 
-install(FILES ${HEADERS} DESTINATION include/reprocpp)
+
+INSTALL( DIRECTORY "include/${CMAKE_PROJECT_NAME}/" DESTINATION "include/${CMAKE_PROJECT_NAME}/" )
 
 install(FILES reprocpp.pc DESTINATION lib/pkgconfig)
