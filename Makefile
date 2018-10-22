@@ -50,13 +50,13 @@ remove:
 # docker stable testing environment
 	
 image: update-dockerfile
-	docker build -t $(IMAGE) . -fDockerfile  --build-arg CXX=$(CXX) --build-arg BUILDCHAIN=$(BUILDCHAIN)
+	docker build -t $(IMAGE) . -fDockerfile  --build-arg CXX=$(CXX) --build-arg BUILDCHAIN=$(BUILDCHAIN) --build-arg TS=$(TS) 
 
 update-dockerfile:
 	/bin/sed -i "s/FROM .*/FROM ${BASE_IMAGE}/" Dockerfile
 
 clean-image: update-dockerfile
-	docker build -t $(IMAGE) . --no-cache -fDockerfile --build-arg CXX=$(CXX) --build-arg BUILDCHAIN=$(BUILDCHAIN)
+	docker build -t $(IMAGE) . --no-cache -fDockerfile --build-arg CXX=$(CXX) --build-arg BUILDCHAIN=$(BUILDCHAIN) --build-arg TS=$(TS)
 
 run:		                                        
 	docker run --name $(CONTAINER) --security-opt seccomp=unconfined  -ti  $(IMAGE) bash

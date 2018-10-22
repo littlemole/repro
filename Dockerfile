@@ -12,6 +12,9 @@ ADD . /usr/local/src/reprocpp
 ARG BUILDCHAIN=make
 ENV BUILDCHAIN=${BUILDCHAIN}
 
+ARG TS=
+ENV TS=${TS}
+
 # make a repro build, test and install
 RUN /usr/local/bin/build.sh reprocpp
 

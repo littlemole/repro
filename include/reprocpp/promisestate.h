@@ -24,6 +24,7 @@ public:
 	typedef PromiseState<Args ...>* Ptr;
 
 	PromiseState()
+		: refcount_(0)
 	{
 		addref();
 
@@ -133,7 +134,8 @@ public:
 	Ptr addref()
 	{
 		//refcount_++;
-		refcount_.fetch_add(1, std::memory_order_acq_rel);
+		//long tmp = 
+		refcount_.fetch_add(1);//, std::memory_order_acq_rel);
 		return this;
 	}
 
@@ -144,9 +146,10 @@ public:
 		//{
 		//	delete this;
 		//}
-		if (refcount_.fetch_sub(1, std::memory_order_acq_rel) == 1) 
+		long tmp = refcount_.fetch_sub(1);
+		if (tmp == 1)//, std::memory_order_acq_rel) == 1) 
 		{
-			std::atomic_thread_fence(std::memory_order_acq_rel);
+			std::atomic_thread_fence(std::memory_order_seq_cst );
 			delete this;
 		}
 
