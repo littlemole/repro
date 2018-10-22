@@ -3,6 +3,7 @@
 
 #include "reprocpp/future.h"
 #include "reprocpp/mempool.h"
+#include <atomic>
 
 /*
  * shared promise state
@@ -152,7 +153,7 @@ protected:
 	PromiseState& operator=(PromiseState<Args ...>&& rhs) = delete;
 	PromiseState& operator=(const PromiseState<Args ...>& rhs) = delete;
 
-	long refcount_ = 1;
+	std::atomic<long> refcount_ = 1;
 };
 
 // simple smart pointer to handle refcounting of PromiseState objects
