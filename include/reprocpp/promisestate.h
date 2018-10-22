@@ -24,8 +24,9 @@ public:
 	typedef PromiseState<Args ...>* Ptr;
 
 	PromiseState()
-		: refcount_(1)
 	{
+		addref();
+
 		LITTLE_MOLE_ADDREF_DEBUG_REF_CNT(promises);
 
 		cb_ = [](Args...) {};
