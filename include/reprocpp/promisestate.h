@@ -24,6 +24,7 @@ public:
 	typedef PromiseState<Args ...>* Ptr;
 
 	PromiseState()
+		: refcount_(1)
 	{
 		LITTLE_MOLE_ADDREF_DEBUG_REF_CNT(promises);
 
@@ -153,7 +154,7 @@ protected:
 	PromiseState& operator=(PromiseState<Args ...>&& rhs) = delete;
 	PromiseState& operator=(const PromiseState<Args ...>& rhs) = delete;
 
-	std::atomic<long> refcount_ = 1;
+	std::atomic<long> refcount_;
 };
 
 // simple smart pointer to handle refcounting of PromiseState objects
