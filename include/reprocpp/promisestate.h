@@ -133,7 +133,7 @@ public:
 	Ptr addref()
 	{
 		//refcount_++;
-		refcount_.fetch_add(1, std::memory_order_relaxed);
+		refcount_.fetch_add(1, std::memory_order_acq_rel);
 		return this;
 	}
 
@@ -144,8 +144,9 @@ public:
 		//{
 		//	delete this;
 		//}
-		if (refcount_.fetch_sub(1, std::memory_order_release) == 1) {
-			std::atomic_thread_fence(std::memory_order_acquire);
+		if (refcount_.fetch_sub(1, std::memory_order_acq_rel) == 1) 
+		{
+			std::atomic_thread_fence(std::memory_order_acq_rel);
 			delete this;
 		}
 
