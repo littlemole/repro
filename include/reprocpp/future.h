@@ -57,8 +57,13 @@ public:
 
 		auto p = PromiseType::create();
 
-		promise_->err_ = [p](std::exception_ptr e)
+		std::function<bool(std::exception_ptr)> chain = promise_->err_;
+		promise_->err_ = [p,chain](std::exception_ptr e)
 		{
+			if(chain && chain(e))
+			{
+				return true;
+			}			
 			p.reject(e);
 			return true;
 		};

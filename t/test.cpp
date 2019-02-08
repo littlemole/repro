@@ -16,6 +16,70 @@ class BasicTest : public ::testing::Test {
 
 }; // end test setup
 
+class Aex : public ReproEx<Aex> {};
+class Bex : public Aex {};
+
+TEST_F(BasicTest, MultiCatch) 
+{
+
+	Loop loop;
+	int c = 0;
+	std::type_index t(typeid(std::exception));
+	std::string e;
+
+	loop.task([&c,&loop]() {
+		c++;
+		MOL_TEST_PRINT_CNTS();
+			
+	})
+	.then([&c,&loop]() {
+
+		return loop.task([&c,&loop]()
+		{
+			c++;
+			MOL_TEST_PRINT_CNTS();
+			throw Bex();
+		});
+	})
+	.otherwise([&t,&e](const Bex& ex) 
+	{
+		t = std::type_index(typeid(ex));
+		e = "somex";
+	})	
+	.then([&c,&loop]() {
+
+		return loop.task([&c,&loop]()
+		{
+			c++;
+			MOL_TEST_PRINT_CNTS();
+		});
+	})		
+	.then([&c]() {
+
+		EXPECT_EQ(2, c);
+		c++;
+		MOL_TEST_PRINT_CNTS();
+	})
+	.otherwise([&t,&e](const Aex& ex) 
+	{
+		t = std::type_index(typeid(ex));
+		e = "someotherxx";
+	})
+	.otherwise([](const std::exception& ex) 
+	{
+		std::cout << "std::ex " << typeid(ex).name() << std::endl;
+		// not called
+	});
+
+	MOL_TEST_PRINT_CNTS();
+	loop.run();
+
+	EXPECT_EQ(2, c);
+	EXPECT_EQ(std::type_index(typeid(Bex)), t);
+	EXPECT_EQ("somex", e);
+	MOL_TEST_ASSERT_CNTS(0, 0);
+}
+
  
 TEST_F(BasicTest, ThenableNewThrows) {
 
