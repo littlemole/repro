@@ -129,25 +129,18 @@ public:
 		return mempool<sizeof(PromiseState<Args...>)>().free(p);
 	}
 
-	// single threaded refcounting support
+	// refcounting support
 
 	Ptr addref()
 	{
-		//refcount_++;
-		//long tmp = 
-		refcount_.fetch_add(1);//, std::memory_order_acq_rel);
+		refcount_.fetch_add(1);
 		return this;
 	}
 
 	void release()
 	{
-		//refcount_--;
-		//if(*refcount_==0)
-		//{
-		//	delete this;
-		//}
 		long tmp = refcount_.fetch_sub(1);
-		if (tmp == 1)//, std::memory_order_acq_rel) == 1) 
+		if (tmp == 1)
 		{
 			std::atomic_thread_fence(std::memory_order_seq_cst );
 			delete this;

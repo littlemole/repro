@@ -838,38 +838,6 @@ TEST_F(BasicTest, ForEachMap) {
     MOL_TEST_ASSERT_CNTS(0,0);
 }
 
-//Ecma Style test function
-Future<int> test(Loop& loop, int i)
-{
-	return future<int>( [&loop,i]( auto resolve, auto reject )
-	{
-		loop.task( [i]()
-		{
-			return 42+i;
-		})
-		.then(resolve);
-	});
-}
-
-TEST_F(BasicTest, EcmaStyle) 
-{
-	Loop loop;
-	int c = 0;
-
-	test(loop,0)
-	.then( [&c](int i)
-	{
-		c = i;
-		EXPECT_EQ(c,42);
-		c++;
-	});
-
-	loop.run();
-
-    EXPECT_EQ(c,43);
-    MOL_TEST_ASSERT_CNTS(0,0);
-}
-
 
 TEST_F(BasicTest, result_of) 
 {

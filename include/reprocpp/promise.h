@@ -103,34 +103,7 @@ Promise<Args...> promise() noexcept
 	return Promise<Args...>::create();
 }
 
-/// ES6 Ecma Script promise style (syntactic sugar)
-template<class ...Args,class T>
-Future<Args...> future( T cb )    
-{
-    auto p = promise<Args...>();
 
-    auto resolve = [p]( Args... args) 
-    {
-        p.resolve(args...);
-    };
-
-    auto reject = [p]( const std::exception& ex) 
-    {
-        p.reject(ex);
-    };
-
-	try
-	{
-	    cb(resolve,reject);
-	}
-	catch(...)
-	{
-		auto ex = std::current_exception();
-		p.reject(ex);
-	}
-
-    return p.future();
-}
 
 } // end namespace org
 
