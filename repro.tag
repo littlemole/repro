@@ -278,8 +278,8 @@
     </member>
   </compound>
   <compound kind="page">
-    <name>md_README</name>
+    <name>index</name>
     <title>repro</title>
-    <filename>md_README</filename>
+    <filename>index</filename>
   </compound>
 </tagfile>
