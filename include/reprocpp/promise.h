@@ -6,13 +6,17 @@
 #include "reprocpp/promisestate.h"
 
 
-/*
+/**
+ * \file promise.h
  * Main promise header. Provides Promise<...Args> template.
  */
 
 namespace repro     {
 
-// shared promise impl with coroutine impl
+/**  
+	\class PromiseMixin
+	\brief shared promise impl with coroutine impl
+*/
 
 template<class ... Args>
 class PromiseMixin
@@ -29,12 +33,14 @@ public:
 		return Promise<Args...>();
 	}
 
+	///
     /// return the future
     Future<Args...> future() const noexcept 
     {
     	return state_->future();
     }
 
+	///
     /// resolve the future and invoke the completion handler
 	template<class ... VArgs>
     void resolve( VArgs&& ... args ) const noexcept 
@@ -54,6 +60,7 @@ public:
         state_->resolve(f);
     }
 
+	///
     /// reject the future and specify exception
 	template<class E>
 	void reject(const E& e) const noexcept
@@ -80,8 +87,9 @@ protected:
 };
 
 /**
-* \class Promise<...Args>
+* 
 * \brief main promise template.
+* \copydoc PromiseMixin
 *
 * gives client a mean to resolve or reject the promise.
 */
@@ -96,7 +104,8 @@ public:
 	{}
 };
 
-/// returns a promise
+//! returns a promise
+//! 
 template<class ... Args>
 Promise<Args...> promise() noexcept
 {

@@ -3,14 +3,14 @@
 
 #include "reprocpp/traits.h"
 
-/*
+/** \file future.h
  * future impl.
  */
 
 namespace repro     {
 
-
-// common Future code shared with coro impl
+/// \class FutureMixin
+/// common Future code shared with coro impl
 
 template<class ... Args>
 class FutureMixin
@@ -125,7 +125,7 @@ protected:
 
 
 /**
-* \class Future<...Args>
+* \copydoc FutureMixin
 * \brief Future part of the async completion.
 *
 * Continuation reference that provides clients with then() and otherwise()
