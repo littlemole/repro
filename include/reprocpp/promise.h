@@ -45,7 +45,7 @@ public:
 	template<class ... VArgs>
     void resolve( VArgs&& ... args ) const noexcept 
     {
-        state_->resolve(std::forward<VArgs&&>(args)...);
+        state_->resolve(std::forward<VArgs>(args)...);
     }
 
 	/// resolve the future from another future.

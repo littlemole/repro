@@ -60,7 +60,7 @@ public:
 
 		try
 		{
-			cb_(std::forward<VArgs&&>(args)...);
+			cb_(std::forward<VArgs>(args)...);
 		}
 		catch (...)
 		{

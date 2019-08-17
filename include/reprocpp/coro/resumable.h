@@ -50,7 +50,7 @@ public:
 	template<class P>
 	void return_value(P&& value)
 	{
-		this->resolve(std::forward<P&&>(value));
+		this->resolve(std::forward<P>(value));
 	}
 	
 };
