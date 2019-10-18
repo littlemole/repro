@@ -21,14 +21,14 @@ class PromiseState
 
 public:
 
+	LITTLE_MOLE_MONITOR(promises);
+
 	typedef PromiseState<Args ...>* Ptr;
 
 	PromiseState()
 		: refcount_(0)
 	{
 		addref();
-
-		LITTLE_MOLE_ADDREF_DEBUG_REF_CNT(promises);
 
 		cb_ = [](Args...) {};
 		err_ = [](std::exception_ptr ex) {
@@ -37,9 +37,7 @@ public:
 	}
 
 	~PromiseState()
-	{
-		LITTLE_MOLE_RELEASE_DEBUG_REF_CNT(promises);
-	}
+	{}
 
 	// return future for this promise
 

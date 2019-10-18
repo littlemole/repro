@@ -10,17 +10,39 @@
 #ifdef MOL_PROMISE_DEBUG
 #include <iostream>
 #include <atomic>
-#define LITTLE_MOLE_DECLARE_DEBUG_REF_CNT(name) extern std::atomic<int> name##_g_count;
-#define LITTLE_MOLE_DEFINE_DEBUG_REF_CNT(name) std::atomic<int> name##_g_count;
-#define LITTLE_MOLE_ADDREF_DEBUG_REF_CNT(name) name##_g_count++;
-#define LITTLE_MOLE_RELEASE_DEBUG_REF_CNT(name) name##_g_count--;
+#include <map>
 
-#else
-#define LITTLE_MOLE_DECLARE_DEBUG_REF_CNT(name)
-#define LITTLE_MOLE_DEFINE_DEBUG_REF_CNT(name)
-#define LITTLE_MOLE_ADDREF_DEBUG_REF_CNT(name)
-#define LITTLE_MOLE_RELEASE_DEBUG_REF_CNT(name)
+
+
+inline std::map<const char*,std::atomic<unsigned int>>& monitorama()
+{
+    static std::map<const char*,std::atomic<unsigned int>> monitor;
+    return monitor;
+}
+
+class Monitor 
+{
+public:
+
+    Monitor(const char* name)
+        : name_(name)
+    {
+        monitorama()[name_]++;
+    }
+
+    ~Monitor()
+    {
+        monitorama()[name_]--;
+    }
+
+private:
+    const char* name_;    
+};
+
+#define LITTLE_MOLE_MONITOR(n) \
+class Monitor_##n : public Monitor { public: Monitor_##n() : Monitor(#n){} }; \
+Monitor_##n monitor_##n_;
+
 #endif
-
 
 #endif

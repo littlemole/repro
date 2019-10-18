@@ -13,8 +13,6 @@
 namespace repro     {
 
 
-LITTLE_MOLE_DECLARE_DEBUG_REF_CNT(promises);
-
 // forwards
 
 template<class ... Args>
