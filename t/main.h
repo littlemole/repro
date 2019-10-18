@@ -9,7 +9,7 @@
 
 #include "reprocpp/promise.h" 
 #include "gtest/gtest.h"
-#include "test.h"
+#include "reprocpp/test.h"
 
 using namespace repro;
 
