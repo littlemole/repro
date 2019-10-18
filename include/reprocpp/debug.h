@@ -43,6 +43,8 @@ private:
 class Monitor_##n : public Monitor { public: Monitor_##n() : Monitor(#n){} }; \
 Monitor_##n monitor_##n_;
 
+#else
+#define LITTLE_MOLE_MONITOR(n)
 #endif
 
 #endif

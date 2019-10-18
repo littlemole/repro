@@ -4,6 +4,7 @@
 #include "reprocpp/future.h"
 #include "reprocpp/mempool.h"
 #include <atomic>
+#include "reprocpp/debug.h"
 
 /*
  * shared promise state
