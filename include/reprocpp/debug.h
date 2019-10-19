@@ -30,17 +30,57 @@ public:
         monitorama()[name_]++;
     }
 
+    Monitor(const Monitor& rhs)
+        :name_(rhs.name_)
+    {
+        monitorama()[name_]++;
+    }
+
+    Monitor( Monitor&& rhs)
+        :name_(rhs.name_)
+    {
+        rhs.name_ = 0;
+    }
+
     ~Monitor()
     {
-        monitorama()[name_]--;
+        if(name_)
+        {
+            monitorama()[name_]--;
+        }
+    }
+
+    Monitor& operator=(const Monitor& rhs)
+    {
+        if( this == &rhs)
+        {
+            return *this;
+        }
+        name_ = rhs.name_;
+        return *this;
+    }
+
+    Monitor& operator=(Monitor&& rhs)
+    {
+        if( this == &rhs)
+        {
+            return *this;
+        }
+        name_ = rhs.name_;
+        return *this;
     }
 
 private:
     const char* name_;    
 };
 
-#define LITTLE_MOLE_MONITOR(n) \
-class Monitor_##n : public Monitor { public: Monitor_##n() : Monitor(#n){} }; \
+#define LITTLE_MOLE_MONITOR(n)      \
+class Monitor_##n : public Monitor  \
+{                                   \
+public:                             \
+    Monitor_##n() : Monitor(#n)     \
+    {}                              \
+};                                  \
 Monitor_##n monitor_##n_;
 
 #else
