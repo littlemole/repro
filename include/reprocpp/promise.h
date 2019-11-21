@@ -12,6 +12,7 @@
  */
 
 namespace repro     {
+namespace impl      {
 
 /**  
 	\class PromiseMixin
@@ -86,6 +87,8 @@ protected:
 	PromiseStateHolder<Args...> state_;
 };
 
+} // end ns impl
+
 /**
 * 
 * \brief main promise template.
@@ -95,7 +98,7 @@ protected:
 */
 
 template<class ... Args>
-class Promise : public PromiseMixin<Args...>
+class Promise : public impl::PromiseMixin<Args...>
 {
 	friend class Future<Args...>;
 public:

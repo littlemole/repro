@@ -8,6 +8,9 @@ namespace repro {
 template<>
 class Future<>;
 
+namespace impl {
+
+
 template<class V>
 auto make_otherwise(V* value)
 {
@@ -27,17 +30,20 @@ auto make_resuming_otherwise(V* value,std::experimental::coroutine_handle<> resu
 		resume_cb.resume();
 		return true;
 	};
+
 }
 
+} // end ns impl
+
 template<class T>
-class Future<T> : public FutureMixin<T>
+class Future<T> : public impl::FutureMixin<T>
 {
 public:
 
-	typedef typename FutureMixin<T>::PromiseType promise_type;
+	typedef typename impl::FutureMixin<T>::PromiseType promise_type;
 
-	Future(PromiseState<T>& p, bool isCoro = false) noexcept
-		: FutureMixin<T>(p)
+	Future(impl::PromiseState<T>& p, bool isCoro = false) noexcept
+		: impl::FutureMixin<T>(p)
 	{
 		if (isCoro)
 		{
@@ -46,7 +52,7 @@ public:
 				value_.set(std::move(t));
 			};
 
-			this->promise_->err_ = make_otherwise(&value_);			
+			this->promise_->err_ = impl::make_otherwise(&value_);			
 		}
 	}
 
@@ -86,23 +92,23 @@ public:
 			resume_cb.resume();
 		});
 
-		this->promise_->err_ = make_resuming_otherwise(&value_,resume_cb);
+		this->promise_->err_ = impl::make_resuming_otherwise(&value_,resume_cb);
 	}
 
 private:
 
-	ValueOrException<T> value_;
+	impl::ValueOrException<T> value_;
 };
 
 template<class T>
-class Future<T&> : public FutureMixin<T&>
+class Future<T&> : public impl::FutureMixin<T&>
 {
 public:
 
-	typedef typename FutureMixin<T&>::PromiseType promise_type;
+	typedef typename impl::FutureMixin<T&>::PromiseType promise_type;
 
-	Future(PromiseState<T&>& p, bool isCoro = false) noexcept
-		: FutureMixin<T&>(p)
+	Future(impl::PromiseState<T&>& p, bool isCoro = false) noexcept
+		: impl::FutureMixin<T&>(p)
 	{
 		if (isCoro)
 		{
@@ -111,7 +117,7 @@ public:
 				value_.set(t);
 			};
 
-			this->promise_->err_ = make_otherwise(&value_);
+			this->promise_->err_ = impl::make_otherwise(&value_);
 		}
 	}
 
@@ -151,24 +157,24 @@ public:
 			resume_cb.resume();
 		});
 
-		this->promise_->err_ = make_resuming_otherwise(&value_,resume_cb);
+		this->promise_->err_ = impl::make_resuming_otherwise(&value_,resume_cb);
 	}
 
 private:
 
-	ValueOrException<T&> value_;
+	impl::ValueOrException<T&> value_;
 };
 
 
 template<>
-class Future<> : public FutureMixin<>
+class Future<> : public impl::FutureMixin<>
 {
 public:
 
-	typedef typename FutureMixin<>::PromiseType promise_type;
+	typedef typename impl::FutureMixin<>::PromiseType promise_type;
 
-	Future(PromiseState<>& p, bool isCoro = false) noexcept
-		: FutureMixin<>(p)
+	Future(impl::PromiseState<>& p, bool isCoro = false) noexcept
+		: impl::FutureMixin<>(p)
 	{
 		if (isCoro)
 		{
@@ -177,7 +183,7 @@ public:
 				value_.set();
 			};
 
-			this->promise_->err_ = make_otherwise(&value_);
+			this->promise_->err_ = impl::make_otherwise(&value_);
 		}
 	}
 
@@ -214,12 +220,12 @@ public:
 			resume_cb.resume();
 		});
 
-		this->promise_->err_ = make_resuming_otherwise(&value_,resume_cb);
+		this->promise_->err_ = impl::make_resuming_otherwise(&value_,resume_cb);
 	}
 
 private:
 
-	ValueOrException<void> value_;
+	impl::ValueOrException<void> value_;
 };
 
 

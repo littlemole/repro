@@ -11,7 +11,7 @@
  */
 
 namespace repro     {
-
+namespace impl {
 
 template<class ... Args>
 class PromiseState 
@@ -240,8 +240,8 @@ private:
 	Ptr ptr_ = nullptr;	
 };
 
-
-} // end namespace org
+} // end namespace imppl
+} // end namespace repro
 
 
 #endif

@@ -21,6 +21,8 @@ class Future;
 template<class ... Args>
 class Promise;
 
+namespace impl     {
+
 template<class ... Args>
 class PromiseState;
 
@@ -32,6 +34,8 @@ class MemPool;
 
 template<size_t S>
 MemPool<S>& mempool();
+
+} // end ns impl
 
 // helper templates
 
@@ -72,7 +76,7 @@ template <typename T>
 using first_argument = decltype(first_argument_helper(std::declval<T>()));
 
 
-} // end namespace org
+} // end namespace repro
 
 
 #endif

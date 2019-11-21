@@ -9,6 +9,8 @@
 
 namespace repro     {
 
+namespace impl     {
+
 /// \class FutureMixin
 /// common Future code shared with coro impl
 
@@ -123,6 +125,7 @@ protected:
     }			
 };
 
+} // end namespace impl
 
 /**
 * \copydoc FutureMixin
@@ -133,12 +136,12 @@ protected:
 */
 
 template<class ... Args>
-class Future : public FutureMixin<Args...>
+class Future : public impl::FutureMixin<Args...>
 {
 public:
     
-    Future(PromiseState<Args...>& p) noexcept
-		: FutureMixin<Args...>(p)
+    Future(impl::PromiseState<Args...>& p) noexcept
+		: impl::FutureMixin<Args...>(p)
     {}
 
     Future() noexcept

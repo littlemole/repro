@@ -4,414 +4,416 @@
 #include "reprocpp/promise.h"
 
 
-namespace repro     {
+namespace repro {
+namespace impl {
 
+template<class T, int I , int O = 0, class E = void>
+class Assignor;
 
-	template<class T, int I , int O = 0, class E = void>
-	class Assignor;
-
-	template<class T, int I, int O>
-	class Assignor<T, I, O, typename std::enable_if<(I>=0 && I < std::tuple_size<T>::value)>::type>
+template<class T, int I, int O>
+class Assignor<T, I, O, typename std::enable_if<(I>=0 && I < std::tuple_size<T>::value)>::type>
+{
+public:
+	template<class ... Args>
+	static void assign(T& values, std::tuple<Args...>& result)
 	{
-	public:
-		template<class ... Args>
-		static void assign(T& values, std::tuple<Args...>& result)
-		{
-			std::get<I>(values) = std::get<O>(result);
+		std::get<I>(values) = std::get<O>(result);
 
-			Assignor<T, I + 1, O + 1>::assign(values, result);
-		}
-	};
+		Assignor<T, I + 1, O + 1>::assign(values, result);
+	}
+};
 
-	template<class T, int I, int O>
-	class Assignor<T, I, O, typename std::enable_if<!(I>=0 && I<std::tuple_size<T>::value)>::type>
-	{
-	public:
-
-		template<class ... Args>
-		static void assign(T& values, std::tuple<Args...> result)
-		{
-		}
-	};
+template<class T, int I, int O>
+class Assignor<T, I, O, typename std::enable_if<!(I>=0 && I<std::tuple_size<T>::value)>::type>
+{
+public:
 
 	template<class ... Args>
-	struct BothCtx
+	static void assign(T& values, std::tuple<Args...> result)
 	{
-		typedef std::shared_ptr<BothCtx<Args...>> Ptr;
-		typedef std::tuple<Args...> combined_t;
+	}
+};
 
-		bool rejected = false;
-		int outstanding = 2;
-		combined_t values;
+template<class ... Args>
+struct BothCtx
+{
+	typedef std::shared_ptr<BothCtx<Args...>> Ptr;
+	typedef std::tuple<Args...> combined_t;
 
-		template<class P>
-		void resolve(P p)
-		{
-			if(rejected)
-				return;
-			
-			outstanding--;
-			if(outstanding==0)
-			{
-				p.resolve(values);
-			}
-		}
+	bool rejected = false;
+	int outstanding = 2;
+	combined_t values;
 
-		template<class P, class E>
-		void reject(P p, E ex)
-		{
-			if(rejected)
-			{
-				return;
-			}
-
-			rejected = true;
-			p.reject(ex);
-		}		
-	};
-
-	template<class T>
-	class Both;
-
-	template<>
-	class Both<void()>
+	template<class P>
+	void resolve(P p)
 	{
-	public:
-
-		typedef std::tuple<> combined_t;
-
-		auto future(Future<> f1, Future<> f2)
+		if(rejected)
+			return;
+		
+		outstanding--;
+		if(outstanding==0)
 		{
-			auto p = promise<combined_t>();
-
-			auto ctx = std::make_shared<BothCtx<>>();
-
-			f1.then([p, ctx]() { resolve(p,ctx); });
-			f1.otherwise([p,ctx](const std::exception& ex) {reject(p,ctx,ex); });
-
-			f2.then([p, ctx]() { resolve(p, ctx); });
-			f2.otherwise([p,ctx](const std::exception& ex) { reject(p,ctx,ex); });
-
-			return p.future();
+			p.resolve(values);
 		}
-
-		auto future(Future<> f1, Future<std::tuple<>> f2)
-		{
-			auto p = promise<combined_t>();
-
-			auto ctx = std::make_shared<BothCtx<>>();
-
-			f1.then([p, ctx]() { resolve(p, ctx); });
-			f1.otherwise([p,ctx](const std::exception& ex) {reject(p,ctx,ex); });
-
-			f2.then([p, ctx](std::tuple<>) { resolve(p, ctx); });
-			f2.otherwise([p,ctx](const std::exception& ex) { reject(p,ctx,ex); });
-
-			return p.future();
-		}
-
-	private:
-
-		template<class P>
-		static void resolve(P p, BothCtx<>::Ptr ctx)
-		{
-			ctx->resolve(p);
-		}
-
-		template<class P>
-		static void reject(P p, BothCtx<>::Ptr ctx, const std::exception& ex)
-		{
-			ctx->reject(p,ex);
-		}		
-	};
-
-
-
-	template<class F>
-	class Both<void(F)>
-	{
-	public:
-
-		typedef std::tuple<F> combined_t;
-
-		auto future(Future<> f1, Future<F> f2)
-		{
-			auto p = promise<combined_t>();
-
-			auto ctx = std::make_shared<BothCtx<F>>();
-
-			f1.then([p, ctx]() { resolve(p, ctx); });
-			f1.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
-
-			f2.then([p, ctx](F result) { resolve(p, ctx, result); });
-			f2.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
-
-			return p.future();
-		}
-
-		auto future(Future<> f1, Future<std::tuple<F>> f2)
-		{
-			auto p = promise<combined_t>();
-
-			auto ctx = std::make_shared<BothCtx<F>>();
-
-			f1.then([p, ctx]() { resolve(p, ctx); });
-			f1.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
-
-			f2.then([p, ctx](std::tuple<F> result) { resolve(p, ctx, result); });
-			f2.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
-
-			return p.future();
-		}
-
-		auto future(Future<F> f1, Future<> f2)
-		{
-			auto p = promise<combined_t>();
-
-			auto ctx = std::make_shared<BothCtx<F>>();
-
-			f1.then([p, ctx](F result) { resolve(p, ctx, result); });
-			f1.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
-
-			f2.then([p, ctx]() { resolve(p, ctx); });
-			f2.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
-
-			return p.future();
-		}
-
-		auto future(Future<F> f1, Future<std::tuple<>> f2)
-		{
-			auto p = promise<combined_t>();
-
-			auto ctx = std::make_shared<BothCtx<F>>();
-
-			f1.then([p, ctx](F result) { resolve(p, ctx, result); });
-			f1.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
-
-			f2.then([p, ctx](std::tuple<>) { resolve(p, ctx); });
-			f2.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
-
-			return p.future();
-		}
-
-	private:
-
-		template<class P, class T>
-		static void resolve(P p,typename BothCtx<F>::Ptr ctx, T t)
-		{
-			std::get<0>(ctx->values) = t;
-			ctx->resolve(p);
-		}
-
-		template<class P, class T>
-		static void resolve(P p, typename BothCtx<F>::Ptr ctx, std::tuple<T> t)
-		{
-			std::get<0>(ctx->values) = std::get<0>(t);
-			ctx->resolve(p);
-		}
-
-		template<class P>
-		static void resolve(P p, typename BothCtx<F>::Ptr ctx)
-		{
-			ctx->resolve(p);
-		}
-
-		template<class P>
-		static void reject(P p, typename BothCtx<F>::Ptr ctx, const std::exception& ex)
-		{
-			ctx->reject(p,ex);
-		}		
-	};
-
-
-
-
-	template<class T, class ... Args>
-	class Both<void(T, Args...)>
-	{
-	public:
-		typedef std::tuple<T, Args...> combined_t;
-
-
-		auto future(Future<> f1, Future<std::tuple<T, Args...>> f2)
-		{
-			auto p = promise<combined_t>();
-
-			auto ctx = std::make_shared<BothCtx<T,Args...>>();
-
-			f1.then([p, ctx]()
-			{
-				resolve(p, ctx);
-			});
-			f1.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
-
-			f2.then([p, ctx](std::tuple<T, Args...> result)
-			{
-				resolve(p, ctx, result);
-			});
-			f2.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
-
-			return p.future();
-		}
-
-		auto future(Future<T> f1, Future<Args...> f2)
-		{
-			auto p = promise<combined_t>();
-
-			auto ctx = std::make_shared<BothCtx<T,Args...>>();
-
-			f1.then([p, ctx]( T result)
-			{
-				resolve<0>(p, ctx,result);
-			});
-			f1.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
-
-			f2.then([p, ctx](Args... result)
-			{
-				resolve<1>(p, ctx, result...);
-			});
-			f2.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
-
-			return p.future();
-		}
-
-		auto future(Future<T> f1, Future<std::tuple<Args...>> f2)
-		{
-			auto p = promise<combined_t>();
-
-			auto ctx = std::make_shared<BothCtx<T,Args...>>();
-
-			f1.then([p, ctx]( T result)
-			{
-				resolve<0>(p, ctx,result);
-			});
-			f1.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
-
-			f2.then([p, ctx](std::tuple<Args...> result)
-			{
-				resolve(p, ctx, result);
-			});
-			f2.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
-
-			return p.future();
-		}		
-
-	private:
-
-		template<class P>
-		static void resolve(P p, typename BothCtx<T,Args...>::Ptr ctx)
-		{
-			ctx->resolve(p);			
-		}
-
-		template<int I>
-		static void resolve(Promise<combined_t> p, typename BothCtx<T,Args...>::Ptr ctx, T result)
-		{
-			std::get<I>(ctx->values) = result;
-			ctx->resolve(p);
-		}
-
-
-		template<int I,class P>
-		static void resolve(Promise<combined_t> p, typename BothCtx<T,Args...>::Ptr ctx, P result)
-		{
-			std::get<I>(ctx->values) = result;
-			ctx->resolve(p);
-		}
-
-
-		static void resolve(Promise<combined_t> p, typename BothCtx<T,Args...>::Ptr ctx, std::tuple<T, Args...> result)
-		{
-			Assignor<combined_t,0>::assign(ctx->values, result);
-			ctx->resolve(p);
-		}
-
-		static void resolve(Promise<combined_t> p, typename BothCtx<T,Args...>::Ptr ctx, std::tuple<Args...> result)
-		{
-			Assignor<combined_t,1>::assign(ctx->values, result);
-			ctx->resolve(p);
-		}
-
-		template<class P>
-		static void reject(P p, typename BothCtx<T,Args...>::Ptr ctx, const std::exception& ex)
-		{
-			ctx->reject(p,ex);
-		}	
-	};
-
-	// boths with no results
-	inline auto both(Future<> f1, Future<> f2)
-	{
-		Both<void()> b;
-		return b.future(f1, f2);
 	}
 
-	inline auto both(Future<> f1, Future<std::tuple<>> f2)
+	template<class P, class E>
+	void reject(P p, E ex)
 	{
-		Both<void()> b;
-		return b.future(f1, f2);
+		if(rejected)
+		{
+			return;
+		}
+
+		rejected = true;
+		p.reject(ex);
+	}		
+};
+
+template<class T>
+class Both;
+
+template<>
+class Both<void()>
+{
+public:
+
+	typedef std::tuple<> combined_t;
+
+	auto future(Future<> f1, Future<> f2)
+	{
+		auto p = promise<combined_t>();
+
+		auto ctx = std::make_shared<BothCtx<>>();
+
+		f1.then([p, ctx]() { resolve(p,ctx); });
+		f1.otherwise([p,ctx](const std::exception& ex) {reject(p,ctx,ex); });
+
+		f2.then([p, ctx]() { resolve(p, ctx); });
+		f2.otherwise([p,ctx](const std::exception& ex) { reject(p,ctx,ex); });
+
+		return p.future();
 	}
 
-	// boths with one result
-	template<class T>
-	auto both(Future<> f1, Future<T> f2)
+	auto future(Future<> f1, Future<std::tuple<>> f2)
 	{
-		Both<void(T)> b;
-		return b.future(f1, f2);
+		auto p = promise<combined_t>();
+
+		auto ctx = std::make_shared<BothCtx<>>();
+
+		f1.then([p, ctx]() { resolve(p, ctx); });
+		f1.otherwise([p,ctx](const std::exception& ex) {reject(p,ctx,ex); });
+
+		f2.then([p, ctx](std::tuple<>) { resolve(p, ctx); });
+		f2.otherwise([p,ctx](const std::exception& ex) { reject(p,ctx,ex); });
+
+		return p.future();
 	}
 
-	template<class T>
-	auto both(Future<T> f1, Future<> f2)
+private:
+
+	template<class P>
+	static void resolve(P p, BothCtx<>::Ptr ctx)
 	{
-		Both<void(T)> b;
-		return b.future(f1, f2);
+		ctx->resolve(p);
+	}
+
+	template<class P>
+	static void reject(P p, BothCtx<>::Ptr ctx, const std::exception& ex)
+	{
+		ctx->reject(p,ex);
+	}		
+};
+
+
+
+template<class F>
+class Both<void(F)>
+{
+public:
+
+	typedef std::tuple<F> combined_t;
+
+	auto future(Future<> f1, Future<F> f2)
+	{
+		auto p = promise<combined_t>();
+
+		auto ctx = std::make_shared<BothCtx<F>>();
+
+		f1.then([p, ctx]() { resolve(p, ctx); });
+		f1.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+
+		f2.then([p, ctx](F result) { resolve(p, ctx, result); });
+		f2.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+
+		return p.future();
+	}
+
+	auto future(Future<> f1, Future<std::tuple<F>> f2)
+	{
+		auto p = promise<combined_t>();
+
+		auto ctx = std::make_shared<BothCtx<F>>();
+
+		f1.then([p, ctx]() { resolve(p, ctx); });
+		f1.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+
+		f2.then([p, ctx](std::tuple<F> result) { resolve(p, ctx, result); });
+		f2.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+
+		return p.future();
+	}
+
+	auto future(Future<F> f1, Future<> f2)
+	{
+		auto p = promise<combined_t>();
+
+		auto ctx = std::make_shared<BothCtx<F>>();
+
+		f1.then([p, ctx](F result) { resolve(p, ctx, result); });
+		f1.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+
+		f2.then([p, ctx]() { resolve(p, ctx); });
+		f2.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+
+		return p.future();
+	}
+
+	auto future(Future<F> f1, Future<std::tuple<>> f2)
+	{
+		auto p = promise<combined_t>();
+
+		auto ctx = std::make_shared<BothCtx<F>>();
+
+		f1.then([p, ctx](F result) { resolve(p, ctx, result); });
+		f1.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+
+		f2.then([p, ctx](std::tuple<>) { resolve(p, ctx); });
+		f2.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+
+		return p.future();
+	}
+
+private:
+
+	template<class P, class T>
+	static void resolve(P p,typename BothCtx<F>::Ptr ctx, T t)
+	{
+		std::get<0>(ctx->values) = t;
+		ctx->resolve(p);
+	}
+
+	template<class P, class T>
+	static void resolve(P p, typename BothCtx<F>::Ptr ctx, std::tuple<T> t)
+	{
+		std::get<0>(ctx->values) = std::get<0>(t);
+		ctx->resolve(p);
+	}
+
+	template<class P>
+	static void resolve(P p, typename BothCtx<F>::Ptr ctx)
+	{
+		ctx->resolve(p);
+	}
+
+	template<class P>
+	static void reject(P p, typename BothCtx<F>::Ptr ctx, const std::exception& ex)
+	{
+		ctx->reject(p,ex);
+	}		
+};
+
+
+
+
+template<class T, class ... Args>
+class Both<void(T, Args...)>
+{
+public:
+	typedef std::tuple<T, Args...> combined_t;
+
+
+	auto future(Future<> f1, Future<std::tuple<T, Args...>> f2)
+	{
+		auto p = promise<combined_t>();
+
+		auto ctx = std::make_shared<BothCtx<T,Args...>>();
+
+		f1.then([p, ctx]()
+		{
+			resolve(p, ctx);
+		});
+		f1.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+
+		f2.then([p, ctx](std::tuple<T, Args...> result)
+		{
+			resolve(p, ctx, result);
+		});
+		f2.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+
+		return p.future();
+	}
+
+	auto future(Future<T> f1, Future<Args...> f2)
+	{
+		auto p = promise<combined_t>();
+
+		auto ctx = std::make_shared<BothCtx<T,Args...>>();
+
+		f1.then([p, ctx]( T result)
+		{
+			resolve<0>(p, ctx,result);
+		});
+		f1.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+
+		f2.then([p, ctx](Args... result)
+		{
+			resolve<1>(p, ctx, result...);
+		});
+		f2.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+
+		return p.future();
+	}
+
+	auto future(Future<T> f1, Future<std::tuple<Args...>> f2)
+	{
+		auto p = promise<combined_t>();
+
+		auto ctx = std::make_shared<BothCtx<T,Args...>>();
+
+		f1.then([p, ctx]( T result)
+		{
+			resolve<0>(p, ctx,result);
+		});
+		f1.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+
+		f2.then([p, ctx](std::tuple<Args...> result)
+		{
+			resolve(p, ctx, result);
+		});
+		f2.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+
+		return p.future();
+	}		
+
+private:
+
+	template<class P>
+	static void resolve(P p, typename BothCtx<T,Args...>::Ptr ctx)
+	{
+		ctx->resolve(p);			
+	}
+
+	template<int I>
+	static void resolve(Promise<combined_t> p, typename BothCtx<T,Args...>::Ptr ctx, T result)
+	{
+		std::get<I>(ctx->values) = result;
+		ctx->resolve(p);
 	}
 
 
-	template<class T>
-	auto both(Future<T> f1, Future<std::tuple<>> f2)
+	template<int I,class P>
+	static void resolve(Promise<combined_t> p, typename BothCtx<T,Args...>::Ptr ctx, P result)
 	{
-		Both<void(T)> b;
-		return b.future(f1, f2);
+		std::get<I>(ctx->values) = result;
+		ctx->resolve(p);
 	}
 
-	// boths with nresults > 1
 
-	template<class T, class ... Args>
-	auto both(Future<T> f1, Future<Args...> f2)
+	static void resolve(Promise<combined_t> p, typename BothCtx<T,Args...>::Ptr ctx, std::tuple<T, Args...> result)
 	{
-		Both<void(T, Args...)> b;
-		return b.future(f1, f2);
+		Assignor<combined_t,0>::assign(ctx->values, result);
+		ctx->resolve(p);
+	}
+
+	static void resolve(Promise<combined_t> p, typename BothCtx<T,Args...>::Ptr ctx, std::tuple<Args...> result)
+	{
+		Assignor<combined_t,1>::assign(ctx->values, result);
+		ctx->resolve(p);
+	}
+
+	template<class P>
+	static void reject(P p, typename BothCtx<T,Args...>::Ptr ctx, const std::exception& ex)
+	{
+		ctx->reject(p,ex);
 	}	
+};
 
-	template<class T, class ... Args>
-	auto both(Future<T> f1, Future<std::tuple<Args...>> f2)
-	{
-		Both<void(T, Args...)> b;
-		return b.future(f1, f2);
-	}
+} // end namespace impl
 
-	template<class ... Args>
-	auto both(Future<> f1, Future<std::tuple<Args...>> f2)
-	{
-		Both<void(Args...)> b;
-		return b.future(f1, f2);
-	}
+// boths with no results
+inline auto both(Future<> f1, Future<> f2)
+{
+	impl::Both<void()> b;
+	return b.future(f1, f2);
+}
+
+inline auto both(Future<> f1, Future<std::tuple<>> f2)
+{
+	impl::Both<void()> b;
+	return b.future(f1, f2);
+}
+
+// boths with one result
+template<class T>
+auto both(Future<> f1, Future<T> f2)
+{
+	impl::Both<void(T)> b;
+	return b.future(f1, f2);
+}
+
+template<class T>
+auto both(Future<T> f1, Future<> f2)
+{
+	impl::Both<void(T)> b;
+	return b.future(f1, f2);
+}
 
 
-	// high level interface
+template<class T>
+auto both(Future<T> f1, Future<std::tuple<>> f2)
+{
+	impl::Both<void(T)> b;
+	return b.future(f1, f2);
+}
 
-	template<class T1, class T2>
-	auto after(T1 t1, T2 t2) noexcept
-	{
-		return both(t1, t2);
-	}
+// boths with nresults > 1
 
-	template<class T1, class ... Args>
-	auto after(T1 t1, Args ... args) noexcept
-	{
-		return both(t1, after(args...));
-	}
+template<class T, class ... Args>
+auto both(Future<T> f1, Future<Args...> f2)
+{
+	impl::Both<void(T, Args...)> b;
+	return b.future(f1, f2);
+}	
+
+template<class T, class ... Args>
+auto both(Future<T> f1, Future<std::tuple<Args...>> f2)
+{
+	impl::Both<void(T, Args...)> b;
+	return b.future(f1, f2);
+}
+
+template<class ... Args>
+auto both(Future<> f1, Future<std::tuple<Args...>> f2)
+{
+	impl::Both<void(Args...)> b;
+	return b.future(f1, f2);
+}
+
+
+// high level interface
+
+template<class T1, class T2>
+auto after(T1 t1, T2 t2) noexcept
+{
+	return both(t1, t2);
+}
+
+template<class T1, class ... Args>
+auto after(T1 t1, Args ... args) noexcept
+{
+	return both(t1, after(args...));
+}
 
 
 

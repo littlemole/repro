@@ -9,6 +9,7 @@
  */
 
 namespace repro     {
+namespace impl      {
 
 
 template<size_t S>
@@ -61,8 +62,8 @@ inline MemPool<S>& mempool()
 	return mem;
 };
 
-
-} // end namespace org
+} // end namespace impl
+} // end namespace repro
 
 
 #endif

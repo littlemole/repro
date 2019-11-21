@@ -4,6 +4,7 @@
 #include "reprocpp/coro/corofuture.h"
 
 namespace repro {
+namespace impl  {
 
 
 
@@ -38,8 +39,10 @@ public:
 	}
 };
 
+} // end ns impl
+
 template<class T>
-class Promise< T> : public CoroPromiseMixin<T>
+class Promise< T> : public impl::CoroPromiseMixin<T>
 {
 	friend class Future<T>;
 public:
@@ -56,7 +59,7 @@ public:
 };
 
 template<class T>
-class Promise<T&> : public CoroPromiseMixin<T&>
+class Promise<T&> : public impl::CoroPromiseMixin<T&>
 {
 	friend class Future<T&>;
 public:
@@ -72,7 +75,7 @@ public:
 
 
 template<>
-class Promise<> : public CoroPromiseMixin<>
+class Promise<> : public impl::CoroPromiseMixin<>
 {
 	friend class Future<>;
 public:

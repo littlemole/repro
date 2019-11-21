@@ -8,6 +8,7 @@
 #endif
 
 namespace repro {
+namespace impl  {
 
 
 // awaitable optional type that holds either a value or an exception
@@ -126,6 +127,7 @@ private:
 
 
 
+}
 }
 
 #endif

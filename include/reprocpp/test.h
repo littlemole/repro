@@ -11,7 +11,7 @@
 
 #ifdef MOL_PROMISE_DEBUG
 #define MOL_TEST_PRINT_CNTS()  											\
-for ( auto it = monitorama().begin(); it != monitorama().end(); it++)	\
+for ( auto it = repro::monitorama().begin(); it != repro::monitorama().end(); it++)	\
 {																		\
 	std::cerr << (*it).first << ": " << (*it).second << std::endl;		\
 } 	
@@ -21,7 +21,7 @@ for ( auto it = monitorama().begin(); it != monitorama().end(); it++)	\
 
 #ifdef MOL_PROMISE_DEBUG
 #define MOL_TEST_ASSERT_CNTS(p,e) \
-for ( auto it = monitorama().begin(); it != monitorama().end(); it++)	\
+for ( auto it = repro::monitorama().begin(); it != repro::monitorama().end(); it++)	\
 {																		\
 	std::cerr << (*it).first << ": " << (*it).second << std::endl;		\
 	EXPECT_EQ(0,(*it).second);											\

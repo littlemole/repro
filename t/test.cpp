@@ -27,14 +27,14 @@ TEST_F(BasicTest, MultiCatch)
 	std::type_index t(typeid(std::exception));
 	std::string e;
 
-	loop.task([&c,&loop]() {
+	loop.task([&c]() {
 		c++;
 		MOL_TEST_PRINT_CNTS();
 			
 	})
 	.then([&c,&loop]() {
 
-		return loop.task([&c,&loop]()
+		return loop.task([&c]()
 		{
 			c++;
 			MOL_TEST_PRINT_CNTS();
@@ -48,7 +48,7 @@ TEST_F(BasicTest, MultiCatch)
 	})	
 	.then([&c,&loop]() {
 
-		return loop.task([&c,&loop]()
+		return loop.task([&c]()
 		{
 			c++;
 			MOL_TEST_PRINT_CNTS();

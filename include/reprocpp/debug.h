@@ -12,7 +12,7 @@
 #include <atomic>
 #include <map>
 
-
+namespace repro {
 
 inline std::map<const char*,std::atomic<unsigned int>>& monitorama()
 {
@@ -74,8 +74,10 @@ private:
     const char* name_;    
 };
 
+} // end namespace repro
+
 #define LITTLE_MOLE_MONITOR(n)      \
-class Monitor_##n : public Monitor  \
+class Monitor_##n : public ::repro::Monitor  \
 {                                   \
 public:                             \
     Monitor_##n() : Monitor(#n)     \
