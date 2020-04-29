@@ -1,84 +1,40 @@
-#ifndef DEFINE_MOL_PROMISE_TRAITS_DEF_GUARD_DEFINE_
-#define DEFINE_MOL_PROMISE_TRAITS_DEF_GUARD_DEFINE_
+#ifndef MOL_DEF_GUARD_DEFINE_REPRO_CPP_TRAITS_DEF_GUARD_
+#define MOL_DEF_GUARD_DEFINE_REPRO_CPP_TRAITS_DEF_GUARD_
 
-#include "reprocpp/ex.h"
-#include "reprocpp/debug.h"
 #include <memory>
 #include <functional>
 
-/*
- * traits used for promise impls
- */
-
-namespace repro     {
-
-
-// forwards
-
-template<class ... Args>
-class Future;
-
-template<class ... Args>
-class Promise;
-
-namespace impl     {
-
-template<class ... Args>
-class PromiseState;
-
-template<class ... Args>
-class PromiseStateHolder;
-
-template<size_t S>
-class MemPool;
-
-template<size_t S>
-MemPool<S>& mempool();
-
-} // end ns impl
-
-// helper templates
-
-template<class R>
-struct IsFuture
+namespace repro {
+namespace traits
 {
-    static const bool value = false;
-};
 
-template<class ... Args>
-struct IsFuture<Future<Args...>>
-{
-    static const bool value = true;
-};
+    template<class F, class ... Args>
+    struct returns_void
+    {
+        using result_type = typename std::invoke_result<F,Args ...>::type;
+        static const bool value = std::is_void<result_type>::value;
+    };
 
-template<class F, class ... Args>
-struct ReturnsVoid
-{
-	typedef typename std::result_of<F(Args ...)>::type ResultType;
-	static const bool value = std::is_void<ResultType>::value;
-};
+    namespace impl
+    {
 
-// first argument helper courtesy https://stackoverflow.com/a/35348334
+        template<typename Ret, typename Arg, typename... Rest>
+        Arg first_argument_helper(Ret(*) (Arg, Rest...));
 
-template<typename Ret, typename Arg, typename... Rest>
-Arg first_argument_helper(Ret(*) (Arg, Rest...));
+        template<typename Ret, typename F, typename Arg, typename... Rest>
+        Arg first_argument_helper(Ret(F::*) (Arg, Rest...));
 
-template<typename Ret, typename F, typename Arg, typename... Rest>
-Arg first_argument_helper(Ret(F::*) (Arg, Rest...));
+        template<typename Ret, typename F, typename Arg, typename... Rest>
+        Arg first_argument_helper(Ret(F::*) (Arg, Rest...) const);
 
-template<typename Ret, typename F, typename Arg, typename... Rest>
-Arg first_argument_helper(Ret(F::*) (Arg, Rest...) const);
+        template <typename F>
+        decltype(first_argument_helper(&F::operator())) first_argument_helper(F);
+    }
 
-template <typename F>
-decltype(first_argument_helper(&F::operator())) first_argument_helper(F);
+    template <typename T>
+    using first_argument = decltype(impl::first_argument_helper(std::declval<T>()));
 
-template <typename T>
-using first_argument = decltype(first_argument_helper(std::declval<T>()));
-
-
-} // end namespace repro
-
+}} // end namespaces
 
 #endif
-
 

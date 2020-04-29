@@ -1,162 +1,121 @@
-#ifndef DEFINE_MOL_PROMISE_FUTURE_DEF_GUARD_DEFINE_
-#define DEFINE_MOL_PROMISE_FUTURE_DEF_GUARD_DEFINE_
+#ifndef MOL_DEF_GUARD_DEFINE_REPRO_CPP_FUTURE_DEF_GUARD_
+#define MOL_DEF_GUARD_DEFINE_REPRO_CPP_FUTURE_DEF_GUARD_
 
-#include "reprocpp/traits.h"
 
-/** \file future.h
- * future impl.
- */
+#include "reprocpp/state.h"
 
-namespace repro     {
-
-namespace impl     {
-
-/// \class FutureMixin
-/// common Future code shared with coro impl
+namespace repro {
 
 template<class ... Args>
-class FutureMixin
-{
-friend PromiseState<Args...>;
-public:
+class Promise;
 
-	typedef Promise<Args ...> PromiseType;
+namespace impl {
 
-	FutureMixin(PromiseState<Args...>& p) noexcept
-		: promise_(&p)
-	{}
-
-	FutureMixin() noexcept
-		: promise_(nullptr)
-	{}
-
-	/// simple then() case passing a callback returning void.
-	/// in this case we return this so client code can call otherwise()
-	/// this terminates any chain of continuation handlers.
-	template<class F, typename std::enable_if<ReturnsVoid<F, Args...>::value>::type* = nullptr>
-	Future<Args...>& then(F f) noexcept
-	{
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
-		// if this was a coroutine produced promise, it will
-		// have default error handler that needs reset IF
-		// you attach a then/otherwise chain manually.
-		// this allows mixing of coroutine and then/otherwise
-		// style of handling promises
-		promise_->err_ = [](std::exception_ptr){ return false; };
-#endif		
-		promise_->cb_ = f; // swap upwards?
-		return *(Future<Args...>*)(this);
-	}
-
-	/// then() implementation that gets called when passing a callback
-	/// returning a Future<Args...>. used to create chains of then()
-	/// calls.
-	template<class F, typename std::enable_if<(!ReturnsVoid<F, Args...>::value) && (IsFuture<typename std::result_of<F(Args...)>::type>::value)>::type* = nullptr>
-	auto then(F f) noexcept -> typename std::result_of<F(Args ...)>::type
-	{
-		typedef typename std::result_of<F(Args ...)>::type FutureType;
-		typedef typename FutureType::PromiseType PromiseType;
-
-		auto p = PromiseType::create();
-
-		std::function<bool(std::exception_ptr)> chain = promise_->err_;
-		promise_->err_ = [p,chain](std::exception_ptr e)
-		{
-			if(chain && chain(e))
-			{
-				return true;
-			}			
-			p.reject(e);
-			return true;
-		};
-
-		promise_->cb_ = [f, p](Args ... args)
-		{
-			auto r = f(args...);
-			p.resolve(r);
-		};
-
-		return p.future();
-	}
-
-	/// promise gets rejected
-	template<class E>
-	Future<Args...>& otherwise(E e) noexcept
-	{
-		std::function<void(first_argument<E>)> f = e;
-
-        otherwise_impl(f);
-
-		return *(Future<Args...>*)(this);
-	}
-
-protected:
-
-	PromiseState<Args...>* promise_;
-
-	template<class E>
-    void otherwise_impl(std::function<void(const E&)> fun)  noexcept 
+    template<class ...Args>
+    class Future_mixin
     {
-        std::function<bool(std::exception_ptr)> chain = promise_->err_;
+    public:
 
-		promise_->err_ = [chain,fun](std::exception_ptr eptr)
-		{
-			if(chain && chain(eptr))
-			{
-				return true;
-			}
+        using PromiseType = Promise<Args...>;
+        using promise_type = PromiseType;
 
-			try
-			{
-				std::rethrow_exception(eptr);
-			}
-			catch(const std::exception& e)
-			{
-				const E* ex = dynamic_cast<const E*>(&e);
-				if(ex)
-				{
-					fun(*ex);
-					return true;
-				}
-			}
-			
-			return false;
-		};
-    }			
-};
+        Future_mixin(std::shared_ptr<impl::promise_state<Args...>> state)
+            : state_(state)
+        {}
+
+        template<class F, typename std::enable_if<traits::returns_void<F, Args...>::value>::type * = nullptr>
+        Future<Args...>& then(F&& cb)
+        {
+            state_->then(std::forward<F>(cb));
+            return *static_cast<Future<Args...>*>(this);
+        }
+
+        template<class F, typename std::enable_if<!traits::returns_void<F, Args...>::value>::type * = nullptr>
+        auto then(F&& cb)
+        {
+            return state_->then(std::forward<F>(cb));
+        }
+
+        template<class E>
+        Future<Args... >& otherwise(E&& e)
+        {
+            state_->otherwise(std::forward<E>(e));
+            return *static_cast<Future<Args...>*>(this);
+        }
+
+#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
+        // coro impl
+
+        bool  await_ready() const
+        {
+            return  state_->ready();
+        }
+
+        void  await_suspend(std::experimental::coroutine_handle<> resume_cb)
+        {
+            state_->suspend(resume_cb);
+        }
+#endif
+
+    protected:
+        std::shared_ptr<impl::promise_state<Args...>> state_;
+    };
 
 } // end namespace impl
 
-/**
-* \copydoc FutureMixin
-* \brief Future part of the async completion.
-*
-* Continuation reference that provides clients with then() and otherwise()
-* accessors.
-*/
-
-template<class ... Args>
-class Future : public impl::FutureMixin<Args...>
+template<class ...Args>
+class Future : public impl::Future_mixin<Args...>
 {
 public:
-    
-    Future(impl::PromiseState<Args...>& p) noexcept
-		: impl::FutureMixin<Args...>(p)
+
+    Future(std::shared_ptr<impl::promise_state<Args...>> state)
+        : impl::Future_mixin<Args...>(state)
     {}
 
-    Future() noexcept
-    {}
-
-    Future& operator=(const Future& rhs)
+#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
+    std::tuple<Args...>  await_resume()
     {
-        this->promise_ = rhs.promise_;
-        return *this;
+        return this->state_->resume();
     }
+#endif    
 };
 
-} // end namespace org
 
+template<class T>
+class Future<T> : public impl::Future_mixin<T>
+{
+public:
+
+    Future(std::shared_ptr<impl::promise_state<T>> state)
+        : impl::Future_mixin<T>(state)
+    {}
+
+#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
+    T  await_resume()
+    {
+        return this->state_->resume();
+    }
+#endif    
+};
+
+
+template<>
+class Future<void> : public impl::Future_mixin<void>
+{
+public:
+
+    Future(std::shared_ptr<impl::promise_state<void>> state)
+        : impl::Future_mixin<void>(state)
+    {}
+
+#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
+    void await_resume()
+    {
+        state_->resume();
+    }
+#endif    
+};
+
+} // end namespace repro
 
 #endif
-
-

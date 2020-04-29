@@ -20,73 +20,18 @@ inline std::map<const char*,std::atomic<unsigned int>>& monitorama()
     return monitor;
 }
 
-class Monitor 
-{
-public:
-
-    Monitor(const char* name)
-        : name_(name)
-    {
-        monitorama()[name_]++;
-    }
-
-    Monitor(const Monitor& rhs)
-        :name_(rhs.name_)
-    {
-        monitorama()[name_]++;
-    }
-
-    Monitor( Monitor&& rhs)
-        :name_(rhs.name_)
-    {
-        rhs.name_ = 0;
-    }
-
-    ~Monitor()
-    {
-        if(name_)
-        {
-            monitorama()[name_]--;
-        }
-    }
-
-    Monitor& operator=(const Monitor& rhs)
-    {
-        if( this == &rhs)
-        {
-            return *this;
-        }
-        name_ = rhs.name_;
-        return *this;
-    }
-
-    Monitor& operator=(Monitor&& rhs)
-    {
-        if( this == &rhs)
-        {
-            return *this;
-        }
-        name_ = rhs.name_;
-        return *this;
-    }
-
-private:
-    const char* name_;    
-};
-
 } // end namespace repro
 
-#define LITTLE_MOLE_MONITOR(n)      \
-class Monitor_##n : public ::repro::Monitor  \
-{                                   \
-public:                             \
-    Monitor_##n() : Monitor(#n)     \
-    {}                              \
-};                                  \
-Monitor_##n monitor_##n_;
+#define REPRO_MONITOR_INCR(n)      \
+monitorama()[#n]++;
+
+#define REPRO_MONITOR_DECR(n)      \
+monitorama()[#n]--;
 
 #else
-#define LITTLE_MOLE_MONITOR(n)
+#define REPRO_MONITOR_INCR(n)
+#define REPRO_MONITOR_DECR(n)
 #endif
+
 
 #endif

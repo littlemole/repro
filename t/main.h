@@ -48,9 +48,10 @@ Task* taskimpl_void(P p,F f)
 		{
 			f();
 		}
-		catch (...)
+		catch (const std::exception& ex)
 		{
-			p.reject(std::current_exception());
+			auto eptr = std::current_exception();
+			p.reject(eptr);
 			return;
 		}
 		p.resolve();
@@ -66,7 +67,7 @@ Task* taskimpl_r(P p,F f)
 		{
 			p.resolve(f());
 		}
-		catch (...)
+		catch (const std::exception& ex)
 		{
 			p.reject(std::current_exception());
 		}
@@ -87,7 +88,7 @@ public:
 		}
 	}
 
-	template<class F,typename std::enable_if<ReturnsVoid<F>::value>::type* = nullptr>
+	template<class F,typename std::enable_if<traits::returns_void<F>::value>::type* = nullptr>
 	Future<> task(F f)
 	{
 		auto p = promise<>();
@@ -97,7 +98,7 @@ public:
 	}
 
 
-	template<class F,typename std::enable_if<!ReturnsVoid<F>::value>::type* = nullptr>
+	template<class F,typename std::enable_if<!traits::returns_void<F>::value>::type* = nullptr>
 	auto task(F f) -> Future<decltype(f())>
 	{
 		auto p = promise<decltype(f())>();
@@ -107,7 +108,7 @@ public:
 	}
 
 
-	template<class F,typename std::enable_if<!ReturnsVoid<F>::value>::type* = nullptr>
+	template<class F,typename std::enable_if<!traits::returns_void<F>::value>::type* = nullptr>
 	auto task2(F f) -> Future<decltype(f())>
 	{
 		auto p = promise<decltype(f())>();

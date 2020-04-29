@@ -1,4 +1,17 @@
 #include "main.h"
+#include "reprocpp/ex.h"
+
+template<class R>
+struct IsFuture
+{
+    static const bool value = false;
+};
+
+template<class ... Args>
+struct IsFuture<Future<Args...>>
+{
+    static const bool value = true;
+};
 
 
 class BasicTest : public ::testing::Test {
@@ -31,7 +44,7 @@ TEST_F(BasicTest, MultiCatch)
 		c++;
 		MOL_TEST_PRINT_CNTS();
 			
-	})
+	})   
 	.then([&c,&loop]() {
 
 		return loop.task([&c]()
@@ -40,17 +53,20 @@ TEST_F(BasicTest, MultiCatch)
 			MOL_TEST_PRINT_CNTS();
 			throw Bex();
 		});
-	})
+	})  
+	 
 	.otherwise([&t,&e](const Bex& ex) 
 	{
+		std::cout << typeid(ex).name() << std::endl;
 		t = std::type_index(typeid(ex));
 		e = "somex";
 	})	
+	
 	.then([&c,&loop]() {
 
 		return loop.task([&c]()
 		{
-			c++;
+			c++; 
 			MOL_TEST_PRINT_CNTS();
 		});
 	})		
@@ -62,11 +78,13 @@ TEST_F(BasicTest, MultiCatch)
 	})
 	.otherwise([&t,&e](const Aex& ex) 
 	{
+		std::cout << typeid(ex).name() << std::endl;
 		t = std::type_index(typeid(ex));
 		e = "someotherxx";
 	})
 	.otherwise([](const std::exception& ex) 
 	{
+		std::cout << typeid(ex).name() << std::endl;
 		std::cout << "std::ex " << typeid(ex).name() << std::endl;
 		// not called
 	});
@@ -490,6 +508,7 @@ TEST_F(BasicTest, ThenableWithValue) {
     MOL_TEST_ASSERT_CNTS(0,0);
 }
 
+/*
 TEST_F(BasicTest, ThenableWithValueRef) {
 
 	Loop loop;
@@ -513,7 +532,7 @@ TEST_F(BasicTest, ThenableWithValueRef) {
 	EXPECT_EQ(c, 2);
 	MOL_TEST_ASSERT_CNTS(0, 0);
 }
-
+*/
 static int testStructCount = 0;
 class TestStruct
 {
