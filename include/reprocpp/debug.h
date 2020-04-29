@@ -23,10 +23,10 @@ inline std::map<const char*,std::atomic<unsigned int>>& monitorama()
 } // end namespace repro
 
 #define REPRO_MONITOR_INCR(n)      \
-monitorama()[#n]++;
+repro::monitorama()[#n]++;
 
 #define REPRO_MONITOR_DECR(n)      \
-monitorama()[#n]--;
+repro::monitorama()[#n]--;
 
 #else
 #define REPRO_MONITOR_INCR(n)
