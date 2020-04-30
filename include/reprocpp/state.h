@@ -255,7 +255,7 @@ namespace impl {
     template<class F, typename std::enable_if<!traits::returns_void<F, Args...>::value>::type*>
     auto promise_state<Args...>::then(F&& cb)
     {
-        return ::repro::impl::bind<std::function<void(Args...)>>(this->cb_,this->err_,std::forward<F>(cb));
+        return ::repro::impl::bind<std::function<void(Args...)>,decltype(this->err_),F,Args...>(this->cb_,this->err_,std::forward<F>(cb));
 
     }
 
@@ -263,7 +263,7 @@ namespace impl {
     template<class F, typename std::enable_if<!traits::returns_void<F, T>::value>::type*>
     auto promise_state<T>::then(F&& cb)
     {
-        return ::repro::impl::bind<std::function<void(T)>>(this->cb_,this->err_,std::forward<F>(cb));
+        return ::repro::impl::bind<std::function<void(T)>,decltype(this->err_),F,T>(this->cb_,this->err_,std::forward<F>(cb));
 
     }
 

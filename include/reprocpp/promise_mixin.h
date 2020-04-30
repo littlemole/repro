@@ -20,6 +20,43 @@ class Future;
 template<class ...Args>
 class Promise;
 
+template<class E>
+void otherwise_chain(std::function<bool(std::exception_ptr)>& err, std::function<void(const E&)> fun) 
+{
+    std::function<bool(std::exception_ptr)> chain = err;
+
+    err = [chain, fun](std::exception_ptr eptr)
+    {
+        if (chain && chain(eptr))
+        {
+            return true;
+        }
+
+        if constexpr (std::is_same<E, std::exception_ptr>::value)
+        {
+            fun(eptr);
+            return true;
+        }
+        else
+        {
+            try
+            {
+                std::rethrow_exception(eptr);
+            }
+            catch (const std::exception & e)
+            {
+                const E* ex = dynamic_cast<const E*>(&e);
+                if (ex)
+                {
+                    fun(*ex);
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    };
+}
 
 namespace impl {
 
@@ -46,7 +83,7 @@ namespace impl {
         {
             std::function<void(traits::first_argument<E>)> f = e;
 
-            otherwise_impl(f);
+            otherwise_chain(err_,f);
 
             if (ex_.has_value())
             {
@@ -96,43 +133,6 @@ namespace impl {
 
     protected:
 
-        template<class E>
-        void otherwise_impl(std::function<void(const E&)> fun)   noexcept
-        {
-            std::function<bool(std::exception_ptr)> chain = err_;
-
-            err_ = [chain, fun](std::exception_ptr eptr)
-            {
-                if (chain && chain(eptr))
-                {
-                    return true;
-                }
-
-                if constexpr (std::is_same<E, std::exception_ptr>::value)
-                {
-                    fun(eptr);
-                    return true;
-                }
-                else
-                {
-                    try
-                    {
-                        std::rethrow_exception(eptr);
-                    }
-                    catch (const std::exception & e)
-                    {
-                        const E* ex = dynamic_cast<const E*>(&e);
-                        if (ex)
-                        {
-                            fun(*ex);
-                            return true;
-                        }
-                    }
-                }
-
-                return false;
-            };
-        }
 
         mutable std::optional<std::exception_ptr> ex_;
 #ifdef _RESUMABLE_FUNCTIONS_SUPPORTED        
