@@ -88,7 +88,7 @@ namespace impl {
 
         typename State::FutureType get_return_object() const
         {
-            return State::FutureType(state_);
+            return typename State::FutureType(state_);
         }
 
         auto initial_suspend() const
