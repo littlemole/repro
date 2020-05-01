@@ -31,6 +31,13 @@ namespace impl {
         }
 
         template<class ... VArgs>
+        typename State::FutureType resolved(VArgs&& ... args) const
+        {
+            state_->resolve(std::forward<VArgs>(args)...);
+            return future();
+        }
+
+        template<class ... VArgs>
         void resolve(Future<VArgs...> f) const
         {
             auto s = state_;
@@ -54,6 +61,20 @@ namespace impl {
         void reject(std::exception_ptr eptr) const
         {
             state_->reject(eptr);
+        }
+
+        template<class E>
+        typename State::FutureType rejected(E&& e) const
+        {
+            auto eptr = std::make_exception_ptr(e);
+            state_->reject(eptr);
+            return future();
+        }
+
+        typename State::FutureType rejected(std::exception_ptr eptr) const
+        {
+            state_->reject(eptr);
+            return future();
         }
 
         typename State::FutureType future() const
