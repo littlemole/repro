@@ -11,12 +11,13 @@
 #include <iostream>
 #include <atomic>
 #include <map>
+#include <string>
 
 namespace repro {
 
-inline std::map<const char*,std::atomic<unsigned int>>& monitorama()
+inline std::map<std::string,std::atomic<unsigned int>>& monitorama()
 {
-    static std::map<const char*,std::atomic<unsigned int>> monitor;
+    static std::map<std::string,std::atomic<unsigned int>> monitor;
     return monitor;
 }
 
