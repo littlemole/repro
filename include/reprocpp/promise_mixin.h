@@ -5,7 +5,11 @@
 #include <atomic>
 
 #ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
+#ifdef _WIN32
 #include <experimental/resumable>
+#else
+#include "reprocpp/coroutine.h"
+#endif
 #endif
 
 
