@@ -187,9 +187,9 @@ auto reject(P p)
 template<class P>
 auto resolve(P p)
 {
-    return [p](auto&& t)
+    return [p](auto&& ... t)
     {
-        p.resolve(std::forward<decltype(t)>(t));
+        p.resolve(std::forward<decltype(t)>(t)...);
     };
 }
 
