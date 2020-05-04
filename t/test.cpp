@@ -54,14 +54,6 @@ TEST_F(BasicTest, MultiCatch)
 			throw Bex();
 		});
 	})  
-	 
-	.otherwise([&t,&e](const Bex& ex) 
-	{
-		std::cout << typeid(ex).name() << std::endl;
-		t = std::type_index(typeid(ex));
-		e = "somex";
-	})	
-	
 	.then([&c,&loop]() {
 
 		return loop.task([&c]()
@@ -76,18 +68,26 @@ TEST_F(BasicTest, MultiCatch)
 		c++;
 		MOL_TEST_PRINT_CNTS();
 	})
-	.otherwise([&t,&e](const Aex& ex) 
-	{
-		std::cout << typeid(ex).name() << std::endl;
-		t = std::type_index(typeid(ex));
-		e = "someotherxx";
-	})
-	.otherwise([](const std::exception& ex) 
-	{
-		std::cout << typeid(ex).name() << std::endl;
-		std::cout << "std::ex " << typeid(ex).name() << std::endl;
-		// not called
-	});
+	.otherwise(
+		[&t,&e](const Bex& ex) 
+		{
+			std::cout << typeid(ex).name() << std::endl;
+			t = std::type_index(typeid(ex));
+			e = "somex";
+		},
+		[&t,&e](const Aex& ex) 
+		{
+			std::cout << typeid(ex).name() << std::endl;
+			t = std::type_index(typeid(ex));
+			e = "someotherxx";
+		},
+		[](const std::exception& ex) 
+		{
+			std::cout << typeid(ex).name() << std::endl;
+			std::cout << "std::ex " << typeid(ex).name() << std::endl;
+			// not called
+		}
+	);
 
 	MOL_TEST_PRINT_CNTS();
 	loop.run();
@@ -117,14 +117,15 @@ TEST_F(BasicTest, ThenableNewThrows) {
 		MOL_TEST_PRINT_CNTS();
 	})
 	.otherwise([&t,&e](const Ex& ex) 
-	{
-		t = std::type_index(typeid(ex));
-		e = ex.what();
-	})
-	.otherwise([](const std::exception& ex) 
-	{
-		// fail
-	});
+		{
+			t = std::type_index(typeid(ex));
+			e = ex.what();
+		},
+		[](const std::exception& ex) 
+		{
+			// fail
+		}
+	);
 
 	MOL_TEST_PRINT_CNTS();
 	loop.run();
@@ -154,14 +155,15 @@ TEST_F(BasicTest, ThenableNewThrowsStdEx) {
 		MOL_TEST_PRINT_CNTS();
 	})
 	.otherwise([](const Ex& ex) 
-	{
-		// not called
-	})
-	.otherwise([&t,&e](const std::exception& ex) 
-	{
-		t = std::type_index(typeid(ex));
-		e = "std::ex";
-	});
+		{
+			// not called
+		},
+		[&t,&e](const std::exception& ex) 
+		{
+			t = std::type_index(typeid(ex));
+			e = "std::ex";
+		}
+	);
 
 	MOL_TEST_PRINT_CNTS();
 	loop.run();
@@ -192,18 +194,19 @@ TEST_F(BasicTest, ThenableNewThrowsSomeEx) {
 		MOL_TEST_PRINT_CNTS();
 	})
 	.otherwise([](const Ex& ex) 
-	{
-		// not called
-	})
-	.otherwise([&t,&e](const SomeEx& ex) 
-	{
-		t = std::type_index(typeid(ex));
-		e = "somex";
-	})
-	.otherwise([](const std::exception& ex) 
-	{
-		// not called
-	});
+		{
+			// not called
+		},
+		[&t,&e](const SomeEx& ex) 
+		{
+			t = std::type_index(typeid(ex));
+			e = "somex";
+		},
+		[](const std::exception& ex) 
+		{
+			// not called
+		}
+	);
 
 	MOL_TEST_PRINT_CNTS();
 	loop.run();

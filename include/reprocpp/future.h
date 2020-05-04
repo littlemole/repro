@@ -37,10 +37,16 @@ namespace impl {
         }
 
         template<class E>
-        Future<Args... >& otherwise(E&& e)
+        void otherwise(E&& e)
         {
             state_->otherwise(std::forward<E>(e));
-            return *static_cast<Future<Args...>*>(this);
+        }
+
+        template<class E, class ... VArgs>
+        void otherwise(E&& e, VArgs&& ... args)
+        {
+            state_->otherwise(std::forward<E>(e));
+            this->otherwise(args...);
         }
 
 #ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
