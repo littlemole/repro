@@ -18,6 +18,9 @@ namespace impl {
 
         using PromiseType = Promise<Args...>;
         using promise_type = PromiseType;
+        
+        Future_mixin()
+        {}
 
         Future_mixin(std::shared_ptr<impl::promise_state<Args...>> state)
             : state_(state)
@@ -74,6 +77,9 @@ class Future : public impl::Future_mixin<Args...>
 {
 public:
 
+    Future()
+    {}
+
     Future(std::shared_ptr<impl::promise_state<Args...>> state)
         : impl::Future_mixin<Args...>(state)
     {}
@@ -92,6 +98,9 @@ class Future<T> : public impl::Future_mixin<T>
 {
 public:
 
+    Future()
+    {}
+
     Future(std::shared_ptr<impl::promise_state<T>> state)
         : impl::Future_mixin<T>(state)
     {}
@@ -109,6 +118,9 @@ template<>
 class Future<void> : public impl::Future_mixin<void>
 {
 public:
+
+    Future()
+    {}
 
     Future(std::shared_ptr<impl::promise_state<void>> state)
         : impl::Future_mixin<void>(state)

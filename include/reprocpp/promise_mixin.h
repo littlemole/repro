@@ -64,13 +64,15 @@ void otherwise_chain(std::function<bool(std::exception_ptr)>& err, std::function
 }
 */
 template<class E>
-void otherwise_chain(std::function<bool(std::exception_ptr)>& err, std::function<void(const E&)> fun) 
+void otherwise_chain(std::function<bool(std::exception_ptr)>& err, E&& fun) 
 {
     std::function<bool(std::exception_ptr)> chain = err;
 
+    using ET = std::remove_const_t<std::remove_reference_t<repro::traits::first_argument<E>>>;
+
     err = [chain, fun](std::exception_ptr eptr)
     {
-        if constexpr (std::is_same<E, std::exception_ptr>::value)
+        if constexpr (std::is_same<ET, std::exception_ptr>::value)
         {
             fun(eptr);
             return true;
@@ -88,7 +90,7 @@ void otherwise_chain(std::function<bool(std::exception_ptr)>& err, std::function
             }
             catch (const std::exception & e)
             {
-                const E* ex = dynamic_cast<const E*>(&e);
+                const ET* ex = dynamic_cast<const ET*>(&e);
                 if (ex)
                 {
                     fun(*ex);
