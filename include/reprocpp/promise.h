@@ -58,7 +58,12 @@ namespace impl {
             state_->reject(eptr);
         }
 
-        void reject(std::exception_ptr eptr) const
+        void reject(std::exception_ptr& eptr) const
+        {
+            state_->reject(eptr);
+        }
+
+        void reject(const std::exception_ptr& eptr) const
         {
             state_->reject(eptr);
         }
@@ -71,7 +76,7 @@ namespace impl {
             return future();
         }
 
-        typename State::FutureType rejected(std::exception_ptr eptr) const
+        typename State::FutureType rejected(const std::exception_ptr &eptr) const
         {
             state_->reject(eptr);
             return future();

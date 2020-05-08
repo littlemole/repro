@@ -24,45 +24,6 @@ class Future;
 template<class ...Args>
 class Promise;
 
-/*
-template<class E>
-void otherwise_chain(std::function<bool(std::exception_ptr)>& err, std::function<void(const E&)> fun) 
-{
-    std::function<bool(std::exception_ptr)> chain = err;
-
-    err = [chain, fun](std::exception_ptr eptr)
-    {
-        if (chain && chain(eptr))
-        {
-            return true;
-        }
-
-        if constexpr (std::is_same<E, std::exception_ptr>::value)
-        {
-            fun(eptr);
-            return true;
-        }
-        else
-        {
-            try
-            {
-                std::rethrow_exception(eptr);
-            }
-            catch (const std::exception & e)
-            {
-                const E* ex = dynamic_cast<const E*>(&e);
-                if (ex)
-                {
-                    fun(*ex);
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    };
-}
-*/
 template<class E>
 void otherwise_chain(std::function<bool(std::exception_ptr)>& err, E&& fun) 
 {
@@ -135,7 +96,7 @@ namespace impl {
             }
         }
 
-        void reject(std::exception_ptr eptr) const
+        void reject(const std::exception_ptr& eptr) const
         {
             auto stabilize_ref_count = this->shared_from_this();
             ex_.emplace(eptr);
