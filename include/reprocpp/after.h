@@ -57,8 +57,8 @@ struct BothCtx
 		}
 	}
 
-	template<class P, class E>
-	void reject(P p, E ex)
+	template<class P>
+	void reject(P p, const std::exception_ptr& ex)
 	{
 		if(rejected)
 		{
@@ -87,10 +87,10 @@ public:
 		auto ctx = std::make_shared<BothCtx<>>();
 
 		f1.then([p, ctx]() { resolve(p,ctx); });
-		f1.otherwise([p,ctx](const std::exception& ex) {reject(p,ctx,ex); });
+		f1.otherwise([p,ctx](const std::exception_ptr& ex) {reject(p,ctx,ex); });
 
 		f2.then([p, ctx]() { resolve(p, ctx); });
-		f2.otherwise([p,ctx](const std::exception& ex) { reject(p,ctx,ex); });
+		f2.otherwise([p,ctx](const std::exception_ptr& ex) { reject(p,ctx,ex); });
 
 		return p.future();
 	}
@@ -102,10 +102,10 @@ public:
 		auto ctx = std::make_shared<BothCtx<>>();
 
 		f1.then([p, ctx]() { resolve(p, ctx); });
-		f1.otherwise([p,ctx](const std::exception& ex) {reject(p,ctx,ex); });
+		f1.otherwise([p,ctx](const std::exception_ptr& ex) {reject(p,ctx,ex); });
 
 		f2.then([p, ctx](std::tuple<>) { resolve(p, ctx); });
-		f2.otherwise([p,ctx](const std::exception& ex) { reject(p,ctx,ex); });
+		f2.otherwise([p,ctx](const std::exception_ptr& ex) { reject(p,ctx,ex); });
 
 		return p.future();
 	}
@@ -119,7 +119,7 @@ private:
 	}
 
 	template<class P>
-	static void reject(P p, BothCtx<>::Ptr ctx, const std::exception& ex)
+	static void reject(P p, BothCtx<>::Ptr ctx, const std::exception_ptr& ex)
 	{
 		ctx->reject(p,ex);
 	}		
@@ -141,10 +141,10 @@ public:
 		auto ctx = std::make_shared<BothCtx<F>>();
 
 		f1.then([p, ctx]() { resolve(p, ctx); });
-		f1.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+		f1.otherwise([p, ctx](const std::exception_ptr& ex) {reject(p,ctx,ex); });
 
 		f2.then([p, ctx](F result) { resolve(p, ctx, result); });
-		f2.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+		f2.otherwise([p, ctx](const std::exception_ptr& ex) {reject(p,ctx,ex); });
 
 		return p.future();
 	}
@@ -156,10 +156,10 @@ public:
 		auto ctx = std::make_shared<BothCtx<F>>();
 
 		f1.then([p, ctx]() { resolve(p, ctx); });
-		f1.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+		f1.otherwise([p, ctx](const std::exception_ptr& ex) {reject(p,ctx,ex); });
 
 		f2.then([p, ctx](std::tuple<F> result) { resolve(p, ctx, result); });
-		f2.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+		f2.otherwise([p, ctx](const std::exception_ptr& ex) {reject(p,ctx,ex); });
 
 		return p.future();
 	}
@@ -171,10 +171,10 @@ public:
 		auto ctx = std::make_shared<BothCtx<F>>();
 
 		f1.then([p, ctx](F result) { resolve(p, ctx, result); });
-		f1.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+		f1.otherwise([p, ctx](const std::exception_ptr& ex) {reject(p,ctx,ex); });
 
 		f2.then([p, ctx]() { resolve(p, ctx); });
-		f2.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+		f2.otherwise([p, ctx](const std::exception_ptr& ex) {reject(p,ctx,ex); });
 
 		return p.future();
 	}
@@ -186,10 +186,10 @@ public:
 		auto ctx = std::make_shared<BothCtx<F>>();
 
 		f1.then([p, ctx](F result) { resolve(p, ctx, result); });
-		f1.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+		f1.otherwise([p, ctx](const std::exception_ptr& ex) {reject(p,ctx,ex); });
 
 		f2.then([p, ctx](std::tuple<>) { resolve(p, ctx); });
-		f2.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+		f2.otherwise([p, ctx](const std::exception_ptr& ex) {reject(p,ctx,ex); });
 
 		return p.future();
 	}
@@ -217,7 +217,7 @@ private:
 	}
 
 	template<class P>
-	static void reject(P p, typename BothCtx<F>::Ptr ctx, const std::exception& ex)
+	static void reject(P p, typename BothCtx<F>::Ptr ctx, const std::exception_ptr& ex)
 	{
 		ctx->reject(p,ex);
 	}		
@@ -243,13 +243,13 @@ public:
 		{
 			resolve(p, ctx);
 		});
-		f1.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+		f1.otherwise([p, ctx](const std::exception_ptr& ex) {reject(p,ctx,ex); });
 
 		f2.then([p, ctx](std::tuple<T, Args...> result)
 		{
 			resolve(p, ctx, result);
 		});
-		f2.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+		f2.otherwise([p, ctx](const std::exception_ptr& ex) {reject(p,ctx,ex); });
 
 		return p.future();
 	}
@@ -264,13 +264,13 @@ public:
 		{
 			resolve<0>(p, ctx,result);
 		});
-		f1.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+		f1.otherwise([p, ctx](const std::exception_ptr& ex) {reject(p,ctx,ex); });
 
 		f2.then([p, ctx](Args... result)
 		{
 			resolve<1>(p, ctx, result...);
 		});
-		f2.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+		f2.otherwise([p, ctx](const std::exception_ptr& ex) {reject(p,ctx,ex); });
 
 		return p.future();
 	}
@@ -285,13 +285,13 @@ public:
 		{
 			resolve<0>(p, ctx,result);
 		});
-		f1.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+		f1.otherwise([p, ctx](const std::exception_ptr& ex) {reject(p,ctx,ex); });
 
 		f2.then([p, ctx](std::tuple<Args...> result)
 		{
 			resolve(p, ctx, result);
 		});
-		f2.otherwise([p, ctx](const std::exception& ex) {reject(p,ctx,ex); });
+		f2.otherwise([p, ctx](const std::exception_ptr& ex) {reject(p,ctx,ex); });
 
 		return p.future();
 	}		
@@ -333,7 +333,7 @@ private:
 	}
 
 	template<class P>
-	static void reject(P p, typename BothCtx<T,Args...>::Ptr ctx, const std::exception& ex)
+	static void reject(P p, typename BothCtx<T,Args...>::Ptr ctx, const std::exception_ptr& ex)
 	{
 		ctx->reject(p,ex);
 	}	

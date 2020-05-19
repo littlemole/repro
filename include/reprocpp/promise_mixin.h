@@ -96,7 +96,7 @@ namespace impl {
             }
         }
 
-        void reject(const std::exception_ptr& eptr) const
+        void reject(const std::exception_ptr& eptr) 
         {
             auto stabilize_ref_count = this->shared_from_this();
             ex_.emplace(eptr);
@@ -135,7 +135,8 @@ namespace impl {
     protected:
 
 
-        mutable std::optional<std::exception_ptr> ex_;
+        //mutable 
+        std::optional<std::exception_ptr> ex_;
 #ifdef _RESUMABLE_FUNCTIONS_SUPPORTED        
         std::experimental::coroutine_handle<> resume_cb_;
 #endif        

@@ -26,7 +26,7 @@ namespace impl {
         auto then(F&& cb);
 
         template<class ... VArgs>
-        void resolve(VArgs&& ... args) const
+        void resolve(VArgs&& ... args) 
         {
             auto stabilize_ref_count = this->shared_from_this();
 
@@ -98,7 +98,7 @@ namespace impl {
         auto then(F&& cb);
 
         template<class P>
-        void resolve(P&& p)  const
+        void resolve(P&& p)  
         {
             auto stabilize_ref_count = this->shared_from_this();
 
@@ -170,7 +170,7 @@ namespace impl {
         template<class F, typename std::enable_if<!traits::returns_void<F>::value>::type * = nullptr>
         auto then(F&& cb);
 
-        void resolve() const
+        void resolve() 
         {
             auto stabilize_ref_count = this->shared_from_this();
 
