@@ -115,15 +115,15 @@ public:
 
 
 template<>
-class Future<void> : public impl::Future_mixin<void>
+class Future<void> : public impl::Future_mixin<>
 {
 public:
 
     Future()
     {}
 
-    Future(std::shared_ptr<impl::promise_state<void>> state)
-        : impl::Future_mixin<void>(state)
+    Future(std::shared_ptr<impl::promise_state<>> state)
+        : impl::Future_mixin<>(state)
     {}
 
 #ifdef _RESUMABLE_FUNCTIONS_SUPPORTED

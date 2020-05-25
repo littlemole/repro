@@ -91,9 +91,9 @@ namespace impl {
 
         // coro impl
 
-        typename State::FutureType get_return_object() const
+        auto get_return_object() const
         {
-            return typename State::FutureType(state_);
+            return future();
         }
 
         auto initial_suspend() const
@@ -125,6 +125,11 @@ class Promise : public impl::Promise_mixin< impl::promise_state<Args...>>
 {
 public:
 
+    Future<Args...> future() const
+    {
+        return Future<Args...>(this->state_);
+    }
+
 #ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
 
     template<class ...VArgs>
@@ -141,6 +146,11 @@ class Promise<T> : public impl::Promise_mixin<impl::promise_state<T>>
 {
 public:
 
+    Future<T> future() const
+    {
+        return Future<T>(this->state_);
+    }
+
 #ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
 
     template<class P>
@@ -152,9 +162,14 @@ public:
 };
 
 template<>
-class Promise<void> : public impl::Promise_mixin< impl::promise_state<void>>
+class Promise<void> : public impl::Promise_mixin< impl::promise_state<>>
 {
  public:
+    Future<void> future() const
+    {
+        return Future<void>(this->state_);
+    }
+
  #ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
     void return_void()
     {
@@ -167,6 +182,12 @@ template<>
 class Promise<> : public impl::Promise_mixin< impl::promise_state<>>
 {
 public:
+
+    Future<> future() const
+    {
+        return Future<>(this->state_);
+    }
+
 #ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
     void return_void()
     {
@@ -174,6 +195,8 @@ public:
     }
 #endif    
 };
+
+
 template<class ... Args>
 auto promise()
 {
