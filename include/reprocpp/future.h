@@ -134,6 +134,27 @@ public:
 #endif    
 };
 
+
+template<>
+class Future<> : public impl::Future_mixin<>
+{
+public:
+
+    Future()
+    {}
+
+    Future(std::shared_ptr<impl::promise_state<>> state)
+        : impl::Future_mixin<>(state)
+    {}
+
+#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
+    void await_resume()
+    {
+        state_->resume();
+    }
+#endif    
+};
+
 } // end namespace repro
 
 #endif
