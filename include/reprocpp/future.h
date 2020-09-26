@@ -39,18 +39,6 @@ namespace impl {
             return state_->then(std::forward<F>(cb));
         }
 
-        template<class E>
-        void otherwise(E&& e)
-        {
-            state_->otherwise(std::forward<E>(e));
-        }
-
-        template<class E, class ... VArgs>
-        void otherwise(E&& e, VArgs&& ... args)
-        {
-            state_->otherwise(std::forward<E>(e));
-            this->otherwise(args...);
-        }
 
 #ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
         // coro impl
@@ -84,6 +72,21 @@ public:
         : impl::Future_mixin<Args...>(state)
     {}
 
+    template<class E>
+    auto otherwise(E&& e)
+    {
+        this->state_->otherwise(std::forward<E>(e));
+        return *this;
+    }
+
+    template<class E, class ... VArgs>
+    auto otherwise(E&& e, VArgs&& ... args)
+    {
+        this->state_->otherwise(std::forward<E>(e));
+        this->otherwise(args...);
+        return *this;
+    }
+
 #ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
     std::tuple<Args...>  await_resume()
     {
@@ -104,6 +107,22 @@ public:
     Future(std::shared_ptr<impl::promise_state<T>> state)
         : impl::Future_mixin<T>(state)
     {}
+
+    template<class E>
+    auto otherwise(E&& e)
+    {
+        this->state_->otherwise(std::forward<E>(e));
+        return *this;
+    }
+
+    template<class E, class ... VArgs>
+    auto otherwise(E&& e, VArgs&& ... args)
+    {
+        this->state_->otherwise(std::forward<E>(e));
+        this->otherwise(args...);
+        return *this;
+    }
+
 
 #ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
     T  await_resume()
@@ -126,6 +145,22 @@ public:
         : impl::Future_mixin<>(state)
     {}
 
+    template<class E>
+    auto otherwise(E&& e)
+    {
+        this->state_->otherwise(std::forward<E>(e));
+        return *this;
+    }
+
+    template<class E, class ... VArgs>
+    auto otherwise(E&& e, VArgs&& ... args)
+    {
+        this->state_->otherwise(std::forward<E>(e));
+        this->otherwise(args...);
+        return *this;
+    }
+
+
 #ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
     void await_resume()
     {
@@ -146,6 +181,21 @@ public:
     Future(std::shared_ptr<impl::promise_state<>> state)
         : impl::Future_mixin<>(state)
     {}
+
+    template<class E>
+    auto otherwise(E&& e)
+    {
+        this->state_->otherwise(std::forward<E>(e));
+        return *this;
+    }
+
+    template<class E, class ... VArgs>
+    auto otherwise(E&& e, VArgs&& ... args)
+    {
+        this->state_->otherwise(std::forward<E>(e));
+        this->otherwise(args...);
+        return *this;
+    }
 
 #ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
     void await_resume()
