@@ -3,7 +3,7 @@ release : override DEBUG = -O3
 
 # if not g++ we assume clang++
 DEFAULT_LIBS = $(TS) -stdlib=libc++ -fcoroutines-ts  -lc++abi -std=c++17
-DEFAULT_OPTS = $(TS) -std=c++14 -stdlib=libc++ -fcoroutines-ts -D_RESUMABLE_FUNCTIONS_SUPPORTED 
+DEFAULT_OPTS = $(TS) -std=c++17 -stdlib=libc++ -fcoroutines-ts -D_RESUMABLE_FUNCTIONS_SUPPORTED 
 
 ifeq ($(CXX),g++)
 DEFAULT_OPTS = -std=c++17
