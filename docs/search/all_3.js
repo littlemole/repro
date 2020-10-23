@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['otherwise',['otherwise',['../classrepro_1_1FutureMixin.html#ac1e77b0676d90992873482f59424db58',1,'repro::FutureMixin']]]
+  ['what_5',['what',['../classrepro_1_1Ex.html#a6f455fcc69cad850efe606c086e9ccdc',1,'repro::Ex']]]
 ];

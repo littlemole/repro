@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['future',['future',['../classrepro_1_1PromiseMixin.html#a47ce15334ede44f3586e011600872197',1,'repro::PromiseMixin']]]
+  ['make_5fexception_5fptr_9',['make_exception_ptr',['../classrepro_1_1Ex.html#aee29dcbeed17d4e1fa9a0b03b6d03148',1,'repro::Ex::make_exception_ptr()'],['../classrepro_1_1ReproEx.html#a19599ac72394837d918bb9f83c64fdf6',1,'repro::ReproEx::make_exception_ptr()']]]
 ];

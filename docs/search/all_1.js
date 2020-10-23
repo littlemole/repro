@@ -1,10 +1,5 @@
 var searchData=
 [
-  ['future',['Future',['../classrepro_1_1Future.html',1,'repro::Future&lt; Args &gt;'],['../classrepro_1_1PromiseMixin.html#a47ce15334ede44f3586e011600872197',1,'repro::PromiseMixin::future()']]],
-  ['future_2eh',['future.h',['../future_8h.html',1,'']]],
-  ['futuremixin',['FutureMixin',['../classrepro_1_1FutureMixin.html',1,'repro']]],
-  ['futuremixin_3c_20args_2e_2e_2e_20_3e',['FutureMixin&lt; Args... &gt;',['../classrepro_1_1FutureMixin.html',1,'repro']]],
-  ['futuremixin_3c_20t_20_26_3e',['FutureMixin&lt; T &amp;&gt;',['../classrepro_1_1FutureMixin.html',1,'repro']]],
-  ['futuremixin_3c_20t_20_3e',['FutureMixin&lt; T &gt;',['../classrepro_1_1FutureMixin.html',1,'repro']]],
-  ['futuremixin_3c_3e',['FutureMixin&lt;&gt;',['../classrepro_1_1FutureMixin.html',1,'repro']]]
+  ['make_5fexception_5fptr_1',['make_exception_ptr',['../classrepro_1_1Ex.html#aee29dcbeed17d4e1fa9a0b03b6d03148',1,'repro::Ex::make_exception_ptr()'],['../classrepro_1_1ReproEx.html#a19599ac72394837d918bb9f83c64fdf6',1,'repro::ReproEx::make_exception_ptr()']]],
+  ['msg_2',['msg',['../classrepro_1_1Ex.html#a02c71ac66a4757573ba575f36fdfb547',1,'repro::Ex']]]
 ];
