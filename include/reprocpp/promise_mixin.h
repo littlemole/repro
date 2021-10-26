@@ -8,7 +8,8 @@
 #ifdef _WIN32
 #include <experimental/resumable>
 #else
-#include "reprocpp/coroutine.h"
+//#include "reprocpp/coroutine.h"
+#include <coroutine>
 #endif
 #endif
 
@@ -126,7 +127,7 @@ namespace impl {
         // promise coro impl
 
 #ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
-        void suspend(std::experimental::coroutine_handle<> resume_cb)
+        void suspend(std::coroutine_handle<> resume_cb)
         {
             this->resume_cb_ = resume_cb;
         }
@@ -138,7 +139,7 @@ namespace impl {
         //mutable 
         std::optional<std::exception_ptr> ex_;
 #ifdef _RESUMABLE_FUNCTIONS_SUPPORTED        
-        std::experimental::coroutine_handle<> resume_cb_;
+        std::coroutine_handle<> resume_cb_;
 #endif        
         std::function<bool(std::exception_ptr)> err_;
     };
