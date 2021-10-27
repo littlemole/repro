@@ -3,11 +3,11 @@ release : override DEBUG = -O3
 
 # if not g++ we assume clang++
 DEFAULT_LIBS = $(TS) -stdlib=libc++ -fcoroutines-ts  -lc++abi -std=c++20
-DEFAULT_OPTS = $(TS) -std=c++20 -stdlib=libc++ -fcoroutines-ts -D_RESUMABLE_FUNCTIONS_SUPPORTED 
+DEFAULT_OPTS = $(TS) -std=c++20 -stdlib=libc++ -fcoroutines-ts
 
 ifeq ($(CXX),g++)
-DEFAULT_OPTS = -std=c++20
-DEFAULT_LIBS = -D_RESUMABLE_FUNCTIONS_SUPPORTED 
+DEFAULT_OPTS = -std=c++20 -fcoroutines
+DEFAULT_LIBS = 
 endif
 
 OPTIONS = -fpic -Wno-write-strings -pthread -D_REENTRANT $(DEFAULT_OPTS)
