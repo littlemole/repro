@@ -2,12 +2,9 @@ DEBUG = -g -DMOL_PROMISE_DEBUG
 release : override DEBUG = -O3
 
 # if not g++ we assume clang++
-#DEFAULT_LIBS = $(TS) -fcoroutines-ts  -lc++abi -std=c++20
-DEFAULT_LIBS = $(TS) -fcoroutines-ts -std=c++20 -stdlib=libc++ -lc++abi 
-#DEFAULT_OPTS = $(TS) -std=c++20 -stdlib=libc++ -fcoroutines-ts -D_RESUMABLE_FUNCTIONS_SUPPORTED 
-DEFAULT_OPTS = $(TS) -std=c++20 -fcoroutines-ts
-
-GTEST = /usr/lib/libgtest_cl.a
+GTEST = /usr/lib/libgtest.a
+DEFAULT_LIBS = $(TS) -stdlib=libc++ -fcoroutines-ts  -lc++abi -std=c++20
+DEFAULT_OPTS = $(TS) -std=c++20 -stdlib=libc++ -fcoroutines-ts
 
 ifeq ($(CXX),g++)
 DEFAULT_OPTS = -std=c++20 -fcoroutines
