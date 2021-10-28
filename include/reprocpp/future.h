@@ -39,8 +39,6 @@ namespace impl {
             return state_->then(std::forward<F>(cb));
         }
 
-
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
         // coro impl
 
         bool  await_ready() const
@@ -52,7 +50,6 @@ namespace impl {
         {
             state_->suspend(resume_cb);
         }
-#endif
 
     protected:
         std::shared_ptr<impl::promise_state<Args...>> state_;
@@ -87,12 +84,10 @@ public:
         return *this;
     }
 
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
     std::tuple<Args...>  await_resume()
     {
         return this->state_->resume();
     }
-#endif    
 };
 
 
@@ -123,13 +118,10 @@ public:
         return *this;
     }
 
-
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
     T  await_resume()
     {
         return this->state_->resume();
     }
-#endif    
 };
 
 
@@ -160,13 +152,10 @@ public:
         return *this;
     }
 
-
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
     void await_resume()
     {
         state_->resume();
     }
-#endif    
 };
 
 
@@ -197,12 +186,10 @@ public:
         return *this;
     }
 
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
     void await_resume()
     {
         state_->resume();
     }
-#endif    
 };
 
 } // end namespace repro

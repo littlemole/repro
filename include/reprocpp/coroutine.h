@@ -1,8 +1,6 @@
 
 namespace std
 {
-namespace experimental
-{
 template <typename R, typename...> struct coroutine_traits
 {
   using promise_type = typename R::promise_type;
@@ -105,4 +103,4 @@ struct suspend_if
   void await_resume() {}
 };
 }
-}
+

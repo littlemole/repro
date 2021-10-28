@@ -2,12 +2,17 @@ DEBUG = -g -DMOL_PROMISE_DEBUG
 release : override DEBUG = -O3
 
 # if not g++ we assume clang++
-DEFAULT_LIBS = $(TS) -stdlib=libc++ -fcoroutines-ts  -lc++abi -std=c++20
-DEFAULT_OPTS = $(TS) -std=c++20 -stdlib=libc++ -fcoroutines-ts -D_RESUMABLE_FUNCTIONS_SUPPORTED 
+#DEFAULT_LIBS = $(TS) -fcoroutines-ts  -lc++abi -std=c++20
+DEFAULT_LIBS = $(TS) -fcoroutines-ts -std=c++20 -stdlib=libc++ -lc++abi 
+#DEFAULT_OPTS = $(TS) -std=c++20 -stdlib=libc++ -fcoroutines-ts -D_RESUMABLE_FUNCTIONS_SUPPORTED 
+DEFAULT_OPTS = $(TS) -std=c++20 -fcoroutines-ts
+
+GTEST = /usr/lib/libgtest_cl.a
 
 ifeq ($(CXX),g++)
-DEFAULT_OPTS = -std=c++20
-DEFAULT_LIBS = -D_RESUMABLE_FUNCTIONS_SUPPORTED 
+DEFAULT_OPTS = -std=c++20 -fcoroutines
+DEFAULT_LIBS = 
+GTEST = /usr/lib/libgtest.a
 endif
 
 OPTIONS = -fpic -Wno-write-strings -pthread -D_REENTRANT $(DEFAULT_OPTS)
@@ -15,7 +20,7 @@ CPPFLAGS = -Wall -I../include $(DEBUG) $(OPTIONS)
 
 TEST_SRC   = .
 TEST_BUILD = ./build
-TEST_LIBS  = /usr/lib/libgtest.a -lpthread $(DEFAULT_LIBS)
+TEST_LIBS  = $(GTEST) -lpthread $(DEFAULT_LIBS)
 
 # Objects for the test executable
 TEST_SRCFILESABS = $(shell ls $(TEST_SRC)/*.cpp)

@@ -87,8 +87,6 @@ namespace impl {
             return typename State::FutureType(state_);
         }
 
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
-
         // coro impl
 
         auto get_return_object() const
@@ -112,8 +110,6 @@ namespace impl {
             this->reject(eptr);
         }
 
-#endif
-
     protected:
         std::shared_ptr<State> state_;
     };
@@ -130,14 +126,11 @@ public:
         return Future<Args...>(this->state_);
     }
 
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
-
     template<class ...VArgs>
     void return_value(VArgs&& ... vargs)
     {
         this->resolve(std::forward<VArgs>(vargs)...);
     }
-#endif    
 };
 
 
@@ -151,14 +144,11 @@ public:
         return Future<T>(this->state_);
     }
 
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
-
     template<class P>
     void return_value(P&& p)
     {
         this->resolve(std::forward<P>(p));
     }
-#endif    
 };
 
 template<>
@@ -170,12 +160,10 @@ class Promise<void> : public impl::Promise_mixin< impl::promise_state<>>
         return Future<void>(this->state_);
     }
 
- #ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
     void return_void()
     {
         this->resolve();
     }
-#endif    
 };
 
 template<>
@@ -188,12 +176,10 @@ public:
         return Future<>(this->state_);
     }
 
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
     void return_void()
     {
         this->resolve();
     }
-#endif    
 };
 
 
