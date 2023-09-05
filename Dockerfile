@@ -15,12 +15,11 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
 ARG CXX=g++
 ENV CXX=${CXX}
 
-# add repro sources
-RUN mkdir -p /usr/local/src/reprocpp
-ADD . /usr/local/src/reprocpp
 
 ADD ./docker/build.sh /usr/local/bin/build.sh
 ADD ./docker/gtest.sh /usr/local/bin/gtest.sh
+
+RUN /usr/local/bin/gtest.sh
 
 ARG BUILDCHAIN=make
 ENV BUILDCHAIN=${BUILDCHAIN}
@@ -28,7 +27,9 @@ ENV BUILDCHAIN=${BUILDCHAIN}
 ARG TS=
 ENV TS=${TS}
 
-RUN /usr/local/bin/gtest.sh
+# add repro sources
+RUN mkdir -p /usr/local/src/reprocpp
+ADD . /usr/local/src/reprocpp
 
 # make a repro build, test and install
 RUN /usr/local/bin/build.sh reprocpp

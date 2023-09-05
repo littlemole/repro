@@ -861,31 +861,10 @@ TEST_F(BasicTest, ForEachMap) {
 }
 
 
-TEST_F(BasicTest, result_of) 
-{
-	std::function<void()> f1 = [](){};
-	std::function<int()> f2 = [](){ return 42; };
-	std::function< Future<>()> f3 = [](){ auto p = promise<>(); return p.future(); };
-
-	typedef std::result_of<decltype(f1)()>::type t1;
-	typedef std::result_of<decltype(f2)()>::type t2;
-	typedef std::result_of<decltype(f3)()>::type t3;
-
-	bool b1 = std::is_void<t1>::value;
-	bool b2 = std::is_same<int,t2>::value;
-	bool b3 = std::is_same< Future<>,t3>::value;
-
-
-    EXPECT_EQ(true,b1);
-    EXPECT_EQ(true,b2);
-    EXPECT_EQ(true,b3);
-    MOL_TEST_ASSERT_CNTS(0,0);
-}
-
 template<class R,class ... Args>
 bool isSimple( std::function<R(Args...)> fun)
 {
-	return !IsFuture<typename std::result_of<decltype(fun)(Args...)>::type>::value;
+	return !IsFuture<typename std::invoke_result<decltype(fun),Args...>::type>::value;
 }
 
 TEST_F(BasicTest, IsSimpleReturn) 
