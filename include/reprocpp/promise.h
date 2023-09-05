@@ -98,12 +98,12 @@ namespace impl {
 
         auto initial_suspend() const
         {
-            return std::experimental::suspend_never{};
+            return std::suspend_never{};
         }
 
-        auto final_suspend() const
+        auto final_suspend() const noexcept
         {
-            return std::experimental::suspend_never{};
+            return std::suspend_never{};
         }
 
         void unhandled_exception() const
