@@ -1,0 +1,7 @@
+{
+    "name": "reprocpp",
+    "version-string": "0.0.29",
+    "dependencies": [
+        "gtest"
+    ]
+}

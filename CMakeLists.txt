@@ -51,7 +51,7 @@ IF (WIN32)
 
 	set(OSLIBS "Ws2_32" "Rpcrt4")
 
-	set(BUILDFLAGS "-await ${FLAGS}")
+	set(BUILDFLAGS " ${FLAGS}")
 
 	set(LIBS ${GTEST_LIBRARIES} ${STDLIB}  )
 
