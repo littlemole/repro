@@ -3,5 +3,5 @@ includedir=${prefix}/include
 
 Name: reprocpp
 Description: reactive c++ promise library for async io
-Version: 0.0.2
-Cflags: -I${includedir}
+Version: 0.0.29
+Cflags: -I${includedir} -std=c++20

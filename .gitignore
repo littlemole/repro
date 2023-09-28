@@ -13,6 +13,8 @@ doxyfile
 .vs/
 Release/
 Debug/
+release/
+debug/
 *.db
 *.opendb
 .vscode/
