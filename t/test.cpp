@@ -291,7 +291,6 @@ TEST_F(BasicTest, ThenableChainedThrows) {
 }
 
 
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
 
 class MyEx : public ReproEx<MyEx> {};
 
@@ -462,7 +461,6 @@ TEST_F(BasicTest, ThenableChainedThrowsCoroTestEx) {
 }
 
 
-#endif
 
 TEST_F(BasicTest, Thenable) {
 
@@ -938,8 +936,6 @@ TEST_F(BasicTest, SimpleChain2)
     MOL_TEST_ASSERT_CNTS(0,0);
 }
 
-
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
 
 Future<> coro_test(Loop& loop, int& result)
 {
@@ -1483,4 +1479,4 @@ TEST_F(BasicTest, PromiseMonadLaw3Associativity) {
 
 
 
-#endif
+

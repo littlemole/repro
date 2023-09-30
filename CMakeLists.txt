@@ -40,12 +40,12 @@ find_package(GTest REQUIRED)
 
 set(LINKERFLAGS "")
 set(STDLIB "")
-set(FLAGS "-D_RESUMABLE_FUNCTIONS_SUPPORTED")
+set(FLAGS "")
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set(STDLIB "c++abi")
     set(LINKERFLAGS "-stdlib=libc++ -fcoroutines-ts")
-    set(FLAGS "-stdlib=libc++ -fcoroutines-ts -D_RESUMABLE_FUNCTIONS_SUPPORTED")
+    set(FLAGS "-stdlib=libc++ -fcoroutines-ts ")
 endif()
 
 

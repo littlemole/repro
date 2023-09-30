@@ -885,7 +885,6 @@ TEST_F(AfterTest, IntDoubleAndString) {
 	MOL_TEST_ASSERT_CNTS(0, 0);
 }
 
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
 
 Future<> coro_trampoline(Loop& loop, std::atomic<int>& c)
 {
@@ -935,5 +934,4 @@ TEST_F(AfterTest, CoroAfter) {
 	MOL_TEST_ASSERT_CNTS(0, 0);
 }
 
-#endif
 

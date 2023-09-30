@@ -31,13 +31,12 @@ namespace impl {
             auto stabilize_ref_count = this->shared_from_this();
 
             value_.emplace(std::forward<VArgs>(args)...);
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED            
+
             if (this->resume_cb_)
             {
                 this->resume_cb_.resume();
             }
             else
-#endif            
                 if (this->cb_)
                 {
                     try {
@@ -50,7 +49,6 @@ namespace impl {
                 }
         }
 
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
 
         // coro support
 
@@ -67,8 +65,6 @@ namespace impl {
         {
             return  value_.has_value() || this->ex_.has_value();
         }
-
-#endif
 
     private:
 
@@ -103,13 +99,11 @@ namespace impl {
             auto stabilize_ref_count = this->shared_from_this();
 
             value_.emplace(std::forward<P>(p));
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED            
             if (this->resume_cb_)
             {
                 this->resume_cb_.resume();
             }
             else
-#endif            
                 if (this->cb_)
                 {
                     try {
@@ -122,7 +116,6 @@ namespace impl {
                 }
         }
 
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
         // coro support
 
         T resume() const
@@ -139,8 +132,6 @@ namespace impl {
         {
             return  value_.has_value() || this->ex_.has_value();
         }
-
-#endif
 
     private:
 
@@ -175,13 +166,11 @@ namespace impl {
             auto stabilize_ref_count = this->shared_from_this();
 
             done_ = true;
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED            
             if (this->resume_cb_)
             {
                 this->resume_cb_.resume();
             }
             else
-#endif            
                 if (this->cb_)
                 {
                     try
@@ -194,8 +183,6 @@ namespace impl {
                     }
                 }
         }
-
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
 
         // coro support
 
@@ -211,8 +198,6 @@ namespace impl {
         {
             return  done_ || this->ex_.has_value();
         }
-
-#endif
 
     private:
 

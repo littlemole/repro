@@ -3,16 +3,7 @@
 
 #include <optional>
 #include <atomic>
-
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
-#ifdef _WIN32
-//#include <experimental/resumable>
 #include <coroutine>
-#else
-#include <coroutine>
-#endif
-#endif
-
 
 #include "reprocpp/traits.h"
 #include "reprocpp/debug.h"
@@ -102,13 +93,11 @@ namespace impl {
             auto stabilize_ref_count = this->shared_from_this();
             ex_.emplace(eptr);
 
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
             if (resume_cb_)
             {
                 resume_cb_.resume();
             }
             else
-#endif            
                 if (err_)
                 {
 
@@ -126,21 +115,16 @@ namespace impl {
 
         // promise coro impl
 
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED
         void suspend(std::coroutine_handle<> resume_cb)
         {
             this->resume_cb_ = resume_cb;
         }
-#endif        
 
     protected:
 
-
         //mutable 
         std::optional<std::exception_ptr> ex_;
-#ifdef _RESUMABLE_FUNCTIONS_SUPPORTED        
         std::coroutine_handle<> resume_cb_;
-#endif        
         std::function<bool(std::exception_ptr)> err_;
     };
 
