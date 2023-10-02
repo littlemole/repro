@@ -32,7 +32,7 @@ namespace traits
     }
 
     template <typename T>
-    using first_argument = decltype(repro::impl::first_argument_helper(std::declval<T>()));
+    using first_argument = decltype(repro::traits::impl::first_argument_helper(std::declval<T>()));
 
 }} // end namespaces
 
