@@ -8,7 +8,7 @@ namespace impl {
 
     template<class ...Args>
     class promise_state :
-        public impl::promise_state_mixin<Args...>
+        public repro::impl::promise_state_mixin<Args...>
     {
     public:
 
@@ -76,7 +76,7 @@ namespace impl {
 
     template<class T>
     class promise_state<T> :
-        public impl::promise_state_mixin<T>
+        public repro::impl::promise_state_mixin<T>
     {
     public:
 
@@ -144,7 +144,7 @@ namespace impl {
 
     template<>
     class promise_state<void> :
-        public impl::promise_state_mixin<void>
+        public repro::impl::promise_state_mixin<void>
     {
     public:
 

@@ -22,7 +22,7 @@ namespace impl {
         Future_mixin()
         {}
 
-        Future_mixin(std::shared_ptr<impl::promise_state<Args...>> state)
+        Future_mixin(std::shared_ptr<repro::impl::promise_state<Args...>> state)
             : state_(state)
         {}
 
@@ -53,21 +53,21 @@ namespace impl {
         }
 
     protected:
-        std::shared_ptr<impl::promise_state<Args...>> state_;
+        std::shared_ptr<repro::impl::promise_state<Args...>> state_;
     };
 
 } // end namespace impl
 
 template<class ...Args>
-class Future : public impl::Future_mixin<Args...>
+class Future : public repro::impl::Future_mixin<Args...>
 {
 public:
 
     Future()
     {}
 
-    Future(std::shared_ptr<impl::promise_state<Args...>> state)
-        : impl::Future_mixin<Args...>(state)
+    Future(std::shared_ptr<repro::impl::promise_state<Args...>> state)
+        : repro::impl::Future_mixin<Args...>(state)
     {}
 
     template<class E>
@@ -93,15 +93,15 @@ public:
 
 
 template<class T>
-class Future<T> : public impl::Future_mixin<T>
+class Future<T> : public repro::impl::Future_mixin<T>
 {
 public:
 
     Future()
     {}
 
-    Future(std::shared_ptr<impl::promise_state<T>> state)
-        : impl::Future_mixin<T>(state)
+    Future(std::shared_ptr<repro::impl::promise_state<T>> state)
+        : repro::impl::Future_mixin<T>(state)
     {}
 
     template<class E>
@@ -127,15 +127,15 @@ public:
 
 
 template<>
-class Future<void> : public impl::Future_mixin<>
+class Future<void> : public repro::impl::Future_mixin<>
 {
 public:
 
     Future()
     {}
 
-    Future(std::shared_ptr<impl::promise_state<>> state)
-        : impl::Future_mixin<>(state)
+    Future(std::shared_ptr<repro::impl::promise_state<>> state)
+        : repro::impl::Future_mixin<>(state)
     {}
 
     template<class E>
@@ -161,15 +161,15 @@ public:
 
 
 template<>
-class Future<> : public impl::Future_mixin<>
+class Future<> : public repro::impl::Future_mixin<>
 {
 public:
 
     Future()
     {}
 
-    Future(std::shared_ptr<impl::promise_state<>> state)
-        : impl::Future_mixin<>(state)
+    Future(std::shared_ptr<repro::impl::promise_state<>> state)
+        : repro::impl::Future_mixin<>(state)
     {}
 
     template<class E>

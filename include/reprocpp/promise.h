@@ -19,7 +19,7 @@ namespace impl {
         Promise_mixin()
             : state_(
                 std::allocate_shared<State>(
-                    impl::mempool<State>()
+                    repro::impl::mempool<State>()
                 )
             )
         {}
@@ -117,7 +117,7 @@ namespace impl {
 } // end namespace impl
 
 template<class ... Args>
-class Promise : public impl::Promise_mixin< impl::promise_state<Args...>>
+class Promise : public repro::impl::Promise_mixin< repro::impl::promise_state<Args...>>
 {
 public:
 
@@ -135,7 +135,7 @@ public:
 
 
 template<class T>
-class Promise<T> : public impl::Promise_mixin<impl::promise_state<T>>
+class Promise<T> : public repro::impl::Promise_mixin<repro::impl::promise_state<T>>
 {
 public:
 
@@ -152,7 +152,7 @@ public:
 };
 
 template<>
-class Promise<void> : public impl::Promise_mixin< impl::promise_state<>>
+class Promise<void> : public repro::impl::Promise_mixin< repro::impl::promise_state<>>
 {
  public:
     Future<void> future() const
@@ -167,7 +167,7 @@ class Promise<void> : public impl::Promise_mixin< impl::promise_state<>>
 };
 
 template<>
-class Promise<> : public impl::Promise_mixin< impl::promise_state<>>
+class Promise<> : public repro::impl::Promise_mixin< repro::impl::promise_state<>>
 {
 public:
 

@@ -344,13 +344,13 @@ private:
 // boths with no results
 inline auto both(Future<> f1, Future<> f2)
 {
-	impl::Both<void()> b;
+	repro::impl::Both<void()> b;
 	return b.future(f1, f2);
 }
 
 inline auto both(Future<> f1, Future<std::tuple<>> f2)
 {
-	impl::Both<void()> b;
+	repro::impl::Both<void()> b;
 	return b.future(f1, f2);
 }
 
@@ -358,14 +358,14 @@ inline auto both(Future<> f1, Future<std::tuple<>> f2)
 template<class T>
 auto both(Future<> f1, Future<T> f2)
 {
-	impl::Both<void(T)> b;
+	repro::impl::Both<void(T)> b;
 	return b.future(f1, f2);
 }
 
 template<class T>
 auto both(Future<T> f1, Future<> f2)
 {
-	impl::Both<void(T)> b;
+	repro::impl::Both<void(T)> b;
 	return b.future(f1, f2);
 }
 
@@ -373,7 +373,7 @@ auto both(Future<T> f1, Future<> f2)
 template<class T>
 auto both(Future<T> f1, Future<std::tuple<>> f2)
 {
-	impl::Both<void(T)> b;
+	repro::impl::Both<void(T)> b;
 	return b.future(f1, f2);
 }
 
@@ -382,21 +382,21 @@ auto both(Future<T> f1, Future<std::tuple<>> f2)
 template<class T, class ... Args>
 auto both(Future<T> f1, Future<Args...> f2)
 {
-	impl::Both<void(T, Args...)> b;
+	repro::impl::Both<void(T, Args...)> b;
 	return b.future(f1, f2);
 }	
 
 template<class T, class ... Args>
 auto both(Future<T> f1, Future<std::tuple<Args...>> f2)
 {
-	impl::Both<void(T, Args...)> b;
+	repro::impl::Both<void(T, Args...)> b;
 	return b.future(f1, f2);
 }
 
 template<class ... Args>
 auto both(Future<> f1, Future<std::tuple<Args...>> f2)
 {
-	impl::Both<void(Args...)> b;
+	repro::impl::Both<void(Args...)> b;
 	return b.future(f1, f2);
 }
 

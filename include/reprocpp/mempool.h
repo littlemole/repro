@@ -110,9 +110,9 @@ namespace impl {
     }
 
     template<class T>
-    impl::mempool_allocator<T>& mempool()
+    repro::impl::mempool_allocator<T>& mempool()
     {
-        static impl::mempool_allocator<T> mp;
+        static repro::impl::mempool_allocator<T> mp;
         return mp;
     }
 
