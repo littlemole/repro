@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+if [ "$BUILDCHAIN" == "make" ]
+then
+
 cd /usr/src/googletest/googletest
 
 
@@ -17,3 +20,4 @@ make
 cp /usr/src/googletest/googletest/lib/libgtest.a /usr/lib/x86_64-linux-gnu/libgtest.a && 
 cp /usr/src/googletest/googletest/lib/libgtest_main.a /usr/lib/x86_64-linux-gnu/libgtest_main.a
 
+fi

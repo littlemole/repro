@@ -15,14 +15,14 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
 ARG CXX=g++
 ENV CXX=${CXX}
 
+ARG BUILDCHAIN=make
+ENV BUILDCHAIN=${BUILDCHAIN}
 
 ADD ./docker/build.sh /usr/local/bin/build.sh
 ADD ./docker/gtest.sh /usr/local/bin/gtest.sh
 
 RUN /usr/local/bin/gtest.sh
 
-ARG BUILDCHAIN=make
-ENV BUILDCHAIN=${BUILDCHAIN}
 
 ARG TS=
 ENV TS=${TS}

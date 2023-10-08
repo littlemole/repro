@@ -28,13 +28,6 @@ endif()
 
 
 ############################################
-# basic dependecies
-############################################
-
-find_package(GTest REQUIRED)
-
-
-############################################
 # clang support
 ############################################
 
@@ -55,15 +48,15 @@ endif()
 
 IF (WIN32)
 
+    find_package(GTest REQUIRED)
+
     set(OSLIBS "Ws2_32" "Rpcrt4")
-    set(BUILDFLAGS " ${FLAGS}")
     set(LIBS ${GTEST_LIBRARIES} ${STDLIB}  )
 
  ELSEIF (UNIX)
 
     set(OSLIBS "pthread")
-    set(BUILDFLAGS " ${FLAGS}")
-    set(LIBS ${GTEST_LIBRARIES} ${STDLIB}  )
+    set(LIBS "gtest" ${STDLIB}  )
 
 ENDIF ()
 
@@ -74,7 +67,34 @@ ENDIF ()
 
 set(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${LINKERFLAGS}" )
 set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} -DMOL_PROMISE_DEBUG")
-set(CMAKE_CXX_FLAGS  	    "${CMAKE_CXX_FLAGS} ${BUILDFLAGS}")
+set(CMAKE_CXX_FLAGS  	    "${CMAKE_CXX_FLAGS} ${FLAGS}")
+
+
+############################################
+# gtest 
+############################################
+if(UNIX)
+
+    include(FetchContent)
+
+    FetchContent_Declare(
+        googletest
+        # Specify the commit you depend on and update it regularly.
+        URL https://github.com/google/googletest/archive/f8d7d77c06936315286eb55f8de22cd23c188571.zip
+    )
+    # For Windows: Prevent overriding the parent project's compiler/linker settings
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    #FetchContent_MakeAvailable(googletest)
+
+    FetchContent_GetProperties(googletest)
+    if(NOT googletest_POPULATED)
+        FetchContent_Populate(googletest)
+        add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR} EXCLUDE_FROM_ALL)
+    endif()
+
+
+endif()
+
 
 
 ############################################
