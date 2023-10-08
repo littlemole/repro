@@ -8,6 +8,7 @@ project(reprocpp)
 set(VERSION 0.0.29)
 include(CTest)
 
+option(WITH_TEST "run tests (default:on)" ON)
 
 ############################################
 # c++ std
@@ -56,7 +57,7 @@ IF (WIN32)
  ELSEIF (UNIX)
 
     set(OSLIBS "pthread")
-    set(LIBS "gtest" ${STDLIB}  )
+    set(LIBS ${STDLIB}  )
 
 ENDIF ()
 
@@ -73,7 +74,7 @@ set(CMAKE_CXX_FLAGS  	    "${CMAKE_CXX_FLAGS} ${FLAGS}")
 ############################################
 # gtest 
 ############################################
-if(UNIX)
+if(UNIX AND WITH_TEST)
 
     include(FetchContent)
 
@@ -92,7 +93,7 @@ if(UNIX)
         add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR} EXCLUDE_FROM_ALL)
     endif()
 
-
+    set(LIBS "gtest" ${LIBS})
 endif()
 
 
@@ -124,6 +125,8 @@ target_include_directories(reprocpp INTERFACE include/)
 # tests
 ############################################
 
+IF(WITH_TEST)
+
 add_executable(basic_test t/test.cpp)
 add_executable(after_test t/after.cpp)
 
@@ -143,6 +146,7 @@ target_link_libraries(after_test ${LIBS} ${OSLIBS} )
 add_test(NAME BasicTest COMMAND basic_test)
 add_test(NAME AfterTest COMMAND after_test)
 
+endif()
 
 ############################################
 # install rules

@@ -18,6 +18,9 @@ ENV CXX=${CXX}
 ARG BUILDCHAIN=make
 ENV BUILDCHAIN=${BUILDCHAIN}
 
+ARG WITH_TEST=On
+ENV WITH_TEST=${WITH_TEST}
+
 ADD ./docker/build.sh /usr/local/bin/build.sh
 ADD ./docker/gtest.sh /usr/local/bin/gtest.sh
 

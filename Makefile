@@ -11,6 +11,7 @@ BUILDCHAIN = make
 CONTAINER = $(shell echo "$(LIBNAME)_$(CXX)_$(BUILDCHAIN)" | sed 's/++/pp/')
 IMAGE = littlemole/$(CONTAINER)
 
+WITH_TEST = On
 
 all: test
 
@@ -47,13 +48,14 @@ remove:
 # docker stable testing environment
 	
 image: update-dockerfile
-	DOCKER_BUILDKIT=0 docker build -t $(IMAGE) . -fDockerfile  --build-arg CXX=$(CXX) --build-arg BUILDCHAIN=$(BUILDCHAIN) --build-arg TS=$(TS) 
+	DOCKER_BUILDKIT=0 docker build -t $(IMAGE) . -fDockerfile  --build-arg CXX=$(CXX) --build-arg BUILDCHAIN=$(BUILDCHAIN) --build-arg TS=$(TS) --build-arg WITH_TEST=$(WITH_TEST)
 
 update-dockerfile:
 #	/bin/sed -i "s/FROM .*/FROM ${BASE_IMAGE}/" Dockerfile
 
 clean-image: update-dockerfile
-	DOCKER_BUILDKIT=0 docker build -t $(IMAGE) . --no-cache -fDockerfile --build-arg CXX=$(CXX) --build-arg BUILDCHAIN=$(BUILDCHAIN) --build-arg TS=$(TS)
+	DOCKER_BUILDKIT=0 docker build -t $(IMAGE) . --no-cache -fDockerfile --build-arg CXX=$(CXX) --build-arg BUILDCHAIN=$(BUILDCHAIN) --build-arg TS=$(TS) --build-arg WITH_TEST=$(WITH_TEST)
+
 
 run:		                                        
 	docker run --name $(CONTAINER) --security-opt seccomp=unconfined  -ti  $(IMAGE) bash
