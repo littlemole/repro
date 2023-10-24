@@ -31,6 +31,8 @@ public:
 	template<class ... Args>
 	static void assign(T& values, std::tuple<Args...> result)
 	{
+		(void)values;
+		(void)result;
 	}
 };
 

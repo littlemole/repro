@@ -121,7 +121,7 @@ TEST_F(BasicTest, ThenableNewThrows) {
 			t = std::type_index(typeid(ex));
 			e = ex.what();
 		},
-		[](const std::exception& ex) 
+		[](const std::exception& ) 
 		{
 			// fail
 		}
@@ -156,6 +156,7 @@ TEST_F(BasicTest, ThenableNewThrowsStdEx) {
 	})
 	.otherwise([](const Ex& ex) 
 		{
+			(void)ex;
 			// not called
 		},
 		[&t,&e](const std::exception& ex) 
@@ -195,6 +196,7 @@ TEST_F(BasicTest, ThenableNewThrowsSomeEx) {
 	})
 	.otherwise([](const Ex& ex) 
 		{
+			(void)ex;
 			// not called
 		},
 		[&t,&e](const SomeEx& ex) 
@@ -204,6 +206,7 @@ TEST_F(BasicTest, ThenableNewThrowsSomeEx) {
 		},
 		[](const std::exception& ex) 
 		{
+			(void)ex;
 			// not called
 		}
 	);
@@ -294,7 +297,7 @@ TEST_F(BasicTest, ThenableChainedThrows) {
 
 class MyEx : public ReproEx<MyEx> {};
 
-Future<> coroReturnNoAsync(Loop& loop,std::string& e)
+Future<> coroReturnNoAsync(Loop&, std::string& e)
 {
 	e = "test";
 	co_return;
@@ -961,7 +964,7 @@ TEST_F(BasicTest, SimpleCoroutine)
 	std::cout << "initial call to coro_test" << std::endl;
 	coro_test(loop,c)
 	.then([](){})
-	.otherwise([](const std::exception& ex){});
+	.otherwise([](const std::exception& ){});
 	
 	std::cout << "loop run()" << std::endl;
 	loop.run();
@@ -1066,7 +1069,7 @@ TEST_F(BasicTest, SimpleCoroutineWithThrow)
 }
 
 
-Future<> coro_test_plain_throw(Loop& loop, int& result)
+Future<> coro_test_plain_throw(Loop& loop, int& /*result*/ )
 {
 	std::cout << "enter coro_test" << std::endl;
 	auto p = promise<>();
@@ -1116,7 +1119,7 @@ TEST_F(BasicTest, PlainOldCoroutineImpleWithThrow)
 
 	coro_test_plain_trampoline(loop, c)
         .then([](){})
-        .otherwise([](const std::exception& ex){});
+        .otherwise([](const std::exception& ){});
 
 
 	std::cout << "loop run()" << std::endl;
@@ -1157,7 +1160,7 @@ TEST_F(BasicTest, PlainOldCoroutineImpleWithThrowInsideOut)
 
 	coro_test_plain_InsideOut_trampoline(loop, c)
 	.then([]() { })
-	.otherwise([&c](const std::exception& ex) { c++; });
+	.otherwise([&c](const std::exception& ) { c++; });
 
 	std::cout << "loop run()" << std::endl;
 	loop.run();
@@ -1190,8 +1193,8 @@ TEST_F(BasicTest, SimpleCoroutineWithValue)
 
 	std::cout << "initial call to coro_test" << std::endl;
 	coro_test_value(loop, c)
-        .then([](int i){})
-        .otherwise([](const std::exception& ex){});
+        .then([](int ){})
+        .otherwise([](const std::exception& ){});
 
 
 	std::cout << "loop run()" << std::endl;
@@ -1224,7 +1227,7 @@ TEST_F(BasicTest, CoroutineWithValueNotConstructible) {
 
 	CoroutineWithValueNotConstructible_trampoline(loop, c)
         .then([](){})
-        .otherwise([](const std::exception& ex){});
+        .otherwise([](const std::exception& ){});
 
 
 	loop.run();
@@ -1257,7 +1260,7 @@ TEST_F(BasicTest, CoroutineWithValueNotConstructibleMovableOnly) {
 
 	CoroutineWithValueNotConstructible_trampolineMovableOnly(loop, c)
         .then([](){})
-        .otherwise([](const std::exception& ex){});
+        .otherwise([](const std::exception& ){});
 
 	loop.run();
 
@@ -1290,7 +1293,7 @@ TEST_F(BasicTest, CoroutineWithValueNotConstructibleMoveAssignableOnly) {
 
 	CoroutineWithValueNotConstructible_trampolineMoveAssignableOnly(loop, c)
         .then([](){})
-        .otherwise([](const std::exception& ex){});
+        .otherwise([](const std::exception& ){});
 
 	loop.run();
 

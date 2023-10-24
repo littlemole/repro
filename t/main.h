@@ -138,14 +138,14 @@ private:
 namespace mol {
 
 
-void nextTick( std::function<void()> f) noexcept
+void nextTick( std::function<void()> ) noexcept
 {
 }
 
 
 
 
-void timeout( std::function<void()> f,int secs, int ms) noexcept
+void timeout( std::function<void()> /*f*/, int /*secs*/, int /*ms*/ ) noexcept
 {
 	
 }
