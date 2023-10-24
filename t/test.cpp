@@ -1097,7 +1097,7 @@ Future<> coro_test_plain_trampoline(Loop& loop, int& result)
 		std::cout << "ex::" << ex.what() << std::endl;
 	}	
 	
-	catch (const std::exception& ex)
+	catch (const std::exception& )
 	{
 		//result++;
 		//std::cout << "ex::" << ex.what() << std::endl;

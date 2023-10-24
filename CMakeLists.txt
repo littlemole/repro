@@ -34,7 +34,12 @@ endif()
 
 set(LINKERFLAGS "")
 set(STDLIB "")
-set(FLAGS "")
+
+if(WIN32)
+    set(FLAGS "/W3")
+else()
+    set(FLAGS "-Wall -Wextra")
+endif()
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set(STDLIB "c++abi")

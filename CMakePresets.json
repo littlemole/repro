@@ -37,7 +37,6 @@
         "displayName": "x64 Release",
         "description": "Sets release build type",
         "inherits": "win-x64-debug",
-        "binaryDir": "${sourceDir}/out/build/x64-Release",
         "cacheVariables": {
           "CMAKE_BUILD_TYPE": "Release"
         }
