@@ -182,3 +182,9 @@ install(FILES ${reprocpp_BINARY_DIR}/reprocpp-config.cmake
          ${reprocpp_BINARY_DIR}/reprocpp-config-version.cmake
          DESTINATION lib/reprocpp-${VERSION})
 
+############################################
+# packaging
+############################################
+
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
+include(package)
