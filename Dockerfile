@@ -1,6 +1,6 @@
 # This is a comment
-FROM ubuntu:22.04
-MAINTAINER me <little.mole@oha7.org>
+FROM ubuntu:24.04
+LABEL AUTHOR="me <little.mole@oha7.org>"
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
